@@ -1,0 +1,69 @@
+# React Native
+node_modules/
+*.log
+*.tsbuildinfo
+*.tgz
+*.patch
+.env
+.env.*
+
+# Metro bundler cache
+.expo/
+.expo-shared/
+.expo-dev-client/
+.expo-go/
+
+# React Native CLI
+ios/Pods/
+ios/build/
+android/.gradle/
+android/app/build/
+android/build/
+
+# Android/IntelliJ
+*.iml
+.gradle/
+local.properties
+
+# iOS/Xcode
+ios/DerivedData/
+ios/*.xcworkspace
+ios/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcshareddata/
+ios/*.xcodeproj/xcshareddata/
+ios/*.xcodeproj/xcuserdata/
+ios/.bundle/
+ios/Flutter/Generated.xcconfig
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+.history/
+.idea/
+
+# Bundle output
+dist/
+build/
+
+# Testing
+coverage/
+jest-coverage/
+*.lcov
+
+# Misc
+*.bak
+*.tmp
+*.swp
+*.lock
+yarn-error.log
+package-lock.json
+
+# EAS build artifacts (Expo Application Services)
+*.tar.gz
+*.apk
+*.aab
+*.ipa
