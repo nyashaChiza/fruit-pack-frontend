@@ -1,69 +1,38 @@
-# React Native
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
 node_modules/
-*.log
-*.tsbuildinfo
-*.tgz
-*.patch
-.env
-.env.*
 
-# Metro bundler cache
+# Expo
 .expo/
-.expo-shared/
-.expo-dev-client/
-.expo-go/
+dist/
+web-build/
+expo-env.d.ts
 
-# React Native CLI
-ios/Pods/
-ios/build/
-android/.gradle/
-android/app/build/
-android/build/
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
-# Android/IntelliJ
-*.iml
-.gradle/
-local.properties
+# Metro
+.metro-health-check*
 
-# iOS/Xcode
-ios/DerivedData/
-ios/*.xcworkspace
-ios/xcuserdata/
-ios/*.xcodeproj/project.xcworkspace/xcuserdata/
-ios/*.xcodeproj/xcuserdata/
-ios/*.xcodeproj/project.xcworkspace/xcshareddata/
-ios/*.xcodeproj/xcshareddata/
-ios/*.xcodeproj/xcuserdata/
-ios/.bundle/
-ios/Flutter/Generated.xcconfig
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 
 # macOS
 .DS_Store
+*.pem
 
-# VS Code
-.vscode/
-.history/
-.idea/
+# local env files
+.env*.local
 
-# Bundle output
-dist/
-build/
+# typescript
+*.tsbuildinfo
 
-# Testing
-coverage/
-jest-coverage/
-*.lcov
-
-# Misc
-*.bak
-*.tmp
-*.swp
-*.lock
-yarn-error.log
-package-lock.json
-
-# EAS build artifacts (Expo Application Services)
-*.tar.gz
-*.apk
-*.aab
-*.ipa
+app-example
