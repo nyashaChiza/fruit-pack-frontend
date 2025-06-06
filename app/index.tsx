@@ -1,69 +1,34 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState } from 'react';
-import { saveToken } from './lib/auth';
+import { View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import api from './lib/api';
 
-export default function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function handleSignup() {
-    try {
-      setLoading(true);
-      const res = await api.post('/signup', { email, password });
-      await saveToken(res.data.token);
-      router.replace('/');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export default function WelcomeScreen() {
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.overlay} />
 
       <View style={styles.card}>
-        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.title}>🍉 Welcome to Fruit Delivery App</Text>
 
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#888"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#888"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
-
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleSignup}
-          disabled={loading}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/login')}
         >
-          <Text style={styles.buttonText}>{loading ? 'Signing up...' : 'Sign Up'}</Text>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={() => router.push('/signup')}
+        >
+          <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -71,55 +36,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#4dd179',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.05)', // subtle fade effect
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 20,
     padding: 24,
     width: '85%',
     shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 10,
+    shadowRadius: 10,
+    elevation: 8,
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: '#2f855a',
-    marginBottom: 24,
+    marginBottom: 30,
     textAlign: 'center',
-  },
-  input: {
-    backgroundColor: 'rgba(240,240,240,0.8)',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    fontSize: 16,
   },
   button: {
     backgroundColor: '#4dd179',
-    padding: 14,
-    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    marginBottom: 16,
+    width: '100%',
     alignItems: 'center',
-    marginTop: 8,
     shadowColor: '#4dd179',
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  secondaryButton: {
+    backgroundColor: '#3fc76d',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
+    fontSize: 16,
   },
 });
-
-
-
