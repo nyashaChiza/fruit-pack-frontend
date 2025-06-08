@@ -10,18 +10,18 @@ export default function WelcomeScreen() {
       <View style={styles.overlay} />
 
       <View style={styles.card}>
-        <Text style={styles.title}>🍉 Welcome to Fruit Delivery App</Text>
+        <Text style={styles.title}>🍉 Welcome to Fruit-Pack</Text>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/login')}
+          onPress={() => router.push('/screens/login')}
         >
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => router.push('/signup')}
+          onPress={() => router.push('/screens/signup')}
         >
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
