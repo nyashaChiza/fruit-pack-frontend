@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,19 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 const FruitDetailScreen = () => {
   const router = useRouter();
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
   const {
     name = 'Apple',
     price = '$1.20',
@@ -24,6 +34,14 @@ const FruitDetailScreen = () => {
     supplierUrl = 'https://example.com/supplier',
   } = useLocalSearchParams();
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
     <LinearGradient
       colors={['#c8decb', '#234027']}
@@ -33,17 +51,14 @@ const FruitDetailScreen = () => {
     >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Back Button */}
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 
-          {/* Image Card */}
           <View style={styles.imageCard}>
             <Image source={{ uri: imageUrl }} style={styles.image} />
           </View>
 
-          {/* Info Card */}
           <View style={styles.infoContainer}>
             <Text style={styles.title}>{name}</Text>
             <Text style={styles.meta}>Created: {createdAt}</Text>
@@ -51,7 +66,6 @@ const FruitDetailScreen = () => {
             <Text style={styles.detail}>Discount: {discount}</Text>
             <Text style={styles.detail}>Supplier: {supplier}</Text>
 
-            {/* Visit Supplier */}
             <TouchableOpacity
               style={styles.linkButton}
               onPress={() => Linking.openURL(supplierUrl)}
@@ -59,7 +73,6 @@ const FruitDetailScreen = () => {
               <Text style={styles.linkButtonText}>Visit Supplier</Text>
             </TouchableOpacity>
 
-            {/* Add to Cart */}
             <TouchableOpacity style={styles.cartButton}>
               <Text style={styles.cartButtonText}>Add to Cart</Text>
             </TouchableOpacity>
@@ -88,6 +101,7 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     color: '#2e7d32',
+    fontFamily: 'Poppins_600SemiBold',
   },
   imageCard: {
     margin: 16,
@@ -107,7 +121,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     padding: 20,
-    backgroundColor: '#ffffffcc', // semi-transparent white
+    backgroundColor: '#ffffffcc',
     marginHorizontal: 16,
     borderRadius: 16,
     shadowColor: '#000',
@@ -118,19 +132,21 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: 'bold',
     color: '#1b5e20',
     marginBottom: 8,
+    fontFamily: 'Poppins_700Bold',
   },
   meta: {
     fontSize: 14,
     color: '#555',
     marginBottom: 12,
+    fontFamily: 'Poppins_400Regular',
   },
   detail: {
     fontSize: 18,
     color: '#2e7d32',
     marginBottom: 8,
+    fontFamily: 'Poppins_400Regular',
   },
   linkButton: {
     backgroundColor: '#c8e6c9',
@@ -142,7 +158,7 @@ const styles = StyleSheet.create({
   linkButtonText: {
     color: '#004d40',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
   },
   cartButton: {
     backgroundColor: '#2e7d32',
@@ -154,7 +170,7 @@ const styles = StyleSheet.create({
   cartButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins_700Bold',
   },
 });
 
