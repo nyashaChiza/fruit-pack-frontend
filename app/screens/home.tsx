@@ -10,8 +10,8 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import api from '../lib/api';
-import { getToken, logout } from '../lib/auth';
+import api from '../../lib/api';
+import { getToken, logout } from '../../lib/auth';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 
@@ -22,15 +22,12 @@ const bannerImages = [
   'https://img.freepik.com/premium-vector/tropical-fruits-sale-banner-template_1302-28418.jpg',
 ];
 
-
-
 export default function Home() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [fruits, setFruits] = useState([]);
   const [token, setToken] = useState<string | null>(null);
 
-  // Fetch token once on mount
   useEffect(() => {
     async function fetchToken() {
       try {
@@ -43,9 +40,8 @@ export default function Home() {
     fetchToken();
   }, []);
 
-  // Fetch categories when token is available
   useEffect(() => {
-    if (!token) return; // Prevent calling API without token
+    if (!token) return;
 
     const fetchCategories = async () => {
       try {
@@ -57,13 +53,11 @@ export default function Home() {
       }
     };
 
-
     fetchCategories();
-  }, [token]); // ✅ token is now a dependency
+  }, [token]);
 
-  // Fetch categories when token is available
   useEffect(() => {
-    if (!token) return; // Prevent calling API without token
+    if (!token) return;
 
     const fetchFruits = async () => {
       try {
@@ -75,17 +69,19 @@ export default function Home() {
       }
     };
 
-
     fetchFruits();
-  }, [token]); // ✅ token is now a dependency
+  }, [token]);
 
-  const handleFruitPress = (fruitId: string) => {
-    router.push(`/fruit/${fruitId}`);
+  const handleFruitPress = (item) => {
+    router.push({
+      pathname: 'screens/details/[id]',
+      params: { id: item.id },
+    });
   };
 
   const renderFruitItem = ({ item }) => (
-    <TouchableOpacity style={styles.productCard} onPress={() => handleFruitPress(item.id)}>
-      <Image source={{ uri: 'https://www.photos-public-domain.com/2017/08/01/cherries/' }} style={styles.productImage} />
+    <TouchableOpacity style={styles.productCard} onPress={() => handleFruitPress(item)}>
+      <Image source={{ uri: item.image_url }} style={styles.productImage} />
       <View style={styles.productDetails}>
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productPrice}>${item.price?.toFixed(2)}</Text>
@@ -152,8 +148,6 @@ export default function Home() {
           >
             <Text style={styles.navText}>👤 Logout</Text>
           </TouchableOpacity>
-
-
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -167,7 +161,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    paddingBottom: 80, // leave space for bottom nav
+    paddingBottom: 80,
   },
   header: {
     flexDirection: 'row',
@@ -272,8 +266,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopColor: '#ddd',
     borderTopWidth: 1,
-    zIndex: 100, // ensure it's above other content
-    elevation: 10, // for Android
+    zIndex: 100,
+    elevation: 10,
   },
   navText: {
     fontSize: 16,

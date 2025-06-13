@@ -1,4 +1,9 @@
 {
-  "name": "Fruit-Pack",
-  "slug": "Fruit-Pack"
+  "expo": {
+    "name": "Fruit-Pack",
+    "slug": "Fruit-Pack",
+    "plugins": ["expo-font"],
+    "scheme": "fruitpack"
+  }
 }
+

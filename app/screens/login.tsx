@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { login } from '../lib/auth';
+import { login } from '../../lib/auth';
 import { useRouter } from 'expo-router';
 
 // === Reusable theme ===

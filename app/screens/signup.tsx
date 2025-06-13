@@ -11,8 +11,7 @@ import {
   Alert,
 } from 'react-native';
 
-import api from '../lib/api';
-import { saveToken } from '../lib/auth';
+import api from '../../lib/api';
 import { router } from 'expo-router';
 
 
@@ -44,7 +43,7 @@ export default function Signup() {
       // await saveToken(res.data.token);
       Alert.alert('Signup successful', 'You can now log in with your credentials.');
       // Optionally, you can redirect to the login page
-      router.replace('/screens/home');
+      router.replace('/screens/login');
     } catch (e: any) {
       console.error(e);
       Alert.alert('Signup failed', e?.response?.data?.detail || 'Please try again.');

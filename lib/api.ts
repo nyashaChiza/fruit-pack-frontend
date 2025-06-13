@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://fruit-pack-api.onrender.com',
+  baseURL: 'https://fruit-pack-api.onrender.com/',
   headers: {
     'Content-Type': 'application/json',
   },
