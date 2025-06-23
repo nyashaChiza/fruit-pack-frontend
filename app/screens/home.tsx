@@ -139,7 +139,9 @@ export default function Home() {
           <TouchableOpacity onPress={() => router.push('/screens/home')}>
             <Text style={styles.navText}>🏠 Home</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
           <Text style={styles.navText}>🛒 Cart</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={async () => {
               await logout();

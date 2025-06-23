@@ -1,277 +1,223 @@
-import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  Image,
+  ScrollView,
   TouchableOpacity,
-  FlatList,
-  SafeAreaView,
+  StyleSheet,
   Alert,
+  Dimensions,
 } from 'react-native';
+import React from 'react';
+import { useCart } from '../../lib/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import api from '../../lib/api';
 
-const initialCartItems = [
-  {
-    id: '1',
-    name: 'Apple',
-    price: 1.2,
-    quantity: 2,
-    supplier: 'Green Farm',
-  },
-  {
-    id: '2',
-    name: 'Banana',
-    price: 0.8,
-    quantity: 3,
-    supplier: 'Tropical Fruits Co.',
-  },
-];
-
-const CartScreen = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
-
-  const incrementQty = (id) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
-  };
-
-  const decrementQty = (id) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 } : item
-      )
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
-  };
-
-  const getTotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
+export default function CartScreen() {
+  const { cart, updateQuantity, removeFromCart } = useCart();
+  const router = useRouter();
 
   const handleCheckout = () => {
-    Alert.alert('Checkout', `Total amount: $${getTotal().toFixed(2)}`);
+    Alert.alert('Checkout', 'Proceeding to checkout...');
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.supplier}>Supplier: {item.supplier}</Text>
-        <Text style={styles.price}>${item.price.toFixed(2)} each</Text>
-      </View>
-
-      <View style={styles.controls}>
-        <TouchableOpacity
-          onPress={() => decrementQty(item.id)}
-          style={styles.qtyBtn}
-        >
-          <Text style={styles.qtyBtnText}>-</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.quantity}>{item.quantity}</Text>
-
-        <TouchableOpacity
-          onPress={() => incrementQty(item.id)}
-          style={styles.qtyBtn}
-        >
-          <Text style={styles.qtyBtnText}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.subtotalContainer}>
-        <Text style={styles.subtotal}>
-          ${(item.price * item.quantity).toFixed(2)}
-        </Text>
-        <TouchableOpacity
-          onPress={() => removeItem(item.id)}
-          style={styles.removeBtn}
-        >
-          <Text style={styles.removeText}>Remove</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <LinearGradient
-      colors={['#e0ffe9', '#a8e6cf', '#dcedc8']}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>Your Cart</Text>
+    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.heading}>🛒 Your Cart</Text>
 
-        {cartItems.length === 0 ? (
+        {cart.length === 0 ? (
           <Text style={styles.emptyText}>Your cart is empty.</Text>
         ) : (
-          <FlatList
-            data={cartItems}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={styles.list}
-          />
+          cart.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <Image
+                source={{ uri: `${api.defaults.baseURL}/products/images/${item.image_name}` }}
+                style={styles.image}
+              />
+              <View style={styles.info}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+
+                <View style={styles.controls}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      updateQuantity(item.id, Math.max(item.quantity - 1, 1))
+                    }
+                    style={styles.qtyButton}
+                  >
+                    <Text style={styles.qtyText}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.qtyCount}>{item.quantity}</Text>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text style={styles.qtyText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => removeFromCart(item.id)}
+                  style={styles.removeButton}
+                >
+                  <Text style={styles.removeButtonText}>🗑 Remove Item</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
         )}
+      </ScrollView>
 
-        <View style={styles.footer}>
-          <Text style={styles.totalText}>Total: ${getTotal().toFixed(2)}</Text>
+      {cart.length > 0 && (
+        <View style={styles.checkoutCard}>
+          <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
 
-          <TouchableOpacity
-            style={[styles.checkoutBtn, cartItems.length === 0 && styles.disabledBtn]}
-            onPress={handleCheckout}
-            disabled={cartItems.length === 0}
-          >
+          <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
             <Text style={styles.checkoutText}>Checkout</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Back </Text>
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      )}
     </LinearGradient>
   );
-};
+}
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
-    flex: 1,
-    paddingTop: 40,
-    paddingHorizontal: 16,
+    padding: 16,
+    paddingBottom: 120, // for bottom card space
   },
-header: {
-  fontSize: 32, // Slightly larger for emphasis
-  fontFamily: 'Poppins_700Bold',
-  color: '#1a4730', // Slightly deeper green for sophistication
-  marginBottom: 24,
-  textAlign: 'center', // Center aligns for balance
-  letterSpacing: 0.5, // Improves readability
-  textTransform: 'uppercase', // Optional: for stronger branding
-},
-
-  list: {
-    paddingBottom: 100,
+  heading: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1b5e20',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#666',
+    marginTop: 32,
   },
   card: {
-    backgroundColor: '#b5f7cd',
-    borderRadius: 12,
-    padding: 16,
-    margin:15,
+    backgroundColor: '#ffffffdd',
+    borderRadius: 20,
+    padding: 12,
     marginBottom: 16,
+    flexDirection: 'row',
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
+    shadowRadius: 6,
     elevation: 3,
   },
+  image: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    marginRight: 12,
+  },
   info: {
-    marginBottom: 12,
+    flex: 1,
+    justifyContent: 'space-between',
   },
   name: {
-    fontSize: 20,
-    fontFamily: 'Poppins_700Bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1b5e20',
-  },
-  supplier: {
-    fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
-    color: '#2e7d32',
-    marginTop: 2,
   },
   price: {
     fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#2e7d32',
-    marginTop: 6,
+    color: '#388e3c',
+    marginTop: 4,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 8,
   },
-  qtyBtn: {
-    backgroundColor: '#2e7d32',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  qtyBtnText: {
-    color: '#fff',
-    fontSize: 22,
-    fontFamily: 'Poppins_700Bold',
-  },
-  quantity: {
-    marginHorizontal: 16,
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#1b5e20',
-  },
-  subtotalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  subtotal: {
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#1b5e20',
-  },
-  removeBtn: {
-    backgroundColor: '#e57373',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  removeText: {
-    color: '#fff',
-    fontFamily: 'Poppins_700Bold',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 16,
-    right: 16,
-    backgroundColor: '#d0f0e8',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  totalText: {
-    fontSize: 22,
-    fontFamily: 'Poppins_700Bold',
-    color: '#00695c',
-    marginBottom: 12,
-  },
-  checkoutBtn: {
-    backgroundColor: '#2e7d32',
-    paddingVertical: 14,
-    paddingHorizontal: 100,
+  qtyButton: {
+    backgroundColor: '#c8e6c9',
+    padding: 10,
     borderRadius: 10,
+    width: 40,
+    alignItems: 'center',
+  },
+  qtyText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2e7d32',
+  },
+  qtyCount: {
+    marginHorizontal: 12,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  removeButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  removeButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  checkoutCard: {
+    position: 'absolute',
+    bottom: 0,
+    width,
+    backgroundColor: '#ffffffee',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  total: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1b5e20',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  checkoutButton: {
+    backgroundColor: '#4caf50',
+    padding: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   checkoutText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  disabledBtn: {
-    backgroundColor: '#a5d6a7',
+  backButton: {
+    backgroundColor: '#9e9e9e',
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  emptyText: {
-    fontSize: 18,
-    fontFamily: 'Poppins_400Regular',
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 50,
+  backButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
-
-export default CartScreen;

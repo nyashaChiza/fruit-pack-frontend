@@ -1,11 +1,14 @@
 import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useFonts, Poppins_400Regular } from '@expo-google-fonts/poppins';
+import { CartProvider } from '../lib/CartContext';
+
 
 SplashScreen.preventAutoHideAsync();
 
-export default function Layout() {
+export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
   });
@@ -20,5 +23,9 @@ export default function Layout() {
     return null;
   }
 
-  return <Stack />;
+  return (
+    <CartProvider>
+      <Stack />
+    </CartProvider>
+  );
 }

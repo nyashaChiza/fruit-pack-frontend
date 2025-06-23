@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system';
 import api from '../../../lib/api';
 import { getToken } from '../../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useCart } from '../../../lib/CartContext';
 
 export default function FruitDetail() {
   const { id } = useLocalSearchParams();
@@ -24,6 +25,10 @@ export default function FruitDetail() {
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [loadingImage, setLoadingImage] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const { addToCart } = useCart();
+
+
+
 
   // Fetch user token
   useEffect(() => {
@@ -92,9 +97,14 @@ export default function FruitDetail() {
   }, [token, product?.image]);
 
   const handleAddToCart = () => {
-    if (product) {
-      Alert.alert(`${product.name} added to cart!`);
-    }
+    if (!product) return;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_name: product.image_name,
+    });
+    Alert.alert(`${product.name} added to cart!`);
   };
 
   // Show loading screen
@@ -175,7 +185,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffffdd',
-    marginTop: -24,
+    marginTop: 34, // 👈 this pulls the card *up* over the image
     padding: 20,
     borderRadius: 24,
     shadowColor: '#000',
@@ -184,6 +194,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+
   title: {
     fontSize: 28,
     fontWeight: '700',
