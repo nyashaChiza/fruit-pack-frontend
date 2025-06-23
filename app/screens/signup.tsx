@@ -39,7 +39,6 @@ export default function Signup() {
         is_active: true,
       };
       const res = await api.post('/users/users/', payload);
-      console.log('Signup response:', res.data);
       // await saveToken(res.data.token);
       Alert.alert('Signup successful', 'You can now log in with your credentials.');
       // Optionally, you can redirect to the login page

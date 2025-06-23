@@ -1,98 +1,192 @@
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Image,
   TouchableOpacity,
-  Linking,
   Alert,
+  StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import * as FileSystem from 'expo-file-system';
+import api from '../../../lib/api';
+import { getToken } from '../../../lib/auth';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function FruitDetail() {
-  const {
-    name,
-    price,
-    discount,
-    description,
-    supplier,
-    imageUrl,
-    supplierUrl,
-    createdAt,
-  } = useLocalSearchParams();
-
+  const { id } = useLocalSearchParams();
   const router = useRouter();
 
-  const handleVisitSupplier = async () => {
-    if (supplierUrl) {
-      const supported = await Linking.canOpenURL(String(supplierUrl));
-      if (supported) {
-        await Linking.openURL(String(supplierUrl));
-      } else {
-        Alert.alert("Can't open the supplier URL");
+  const [product, setProduct] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+
+  // Fetch user token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const savedToken = await getToken();
+        setToken(savedToken);
+      } catch (err) {
+        console.error('Error fetching token:', err);
       }
+    };
+    fetchToken();
+  }, []);
+
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!token || !id) return;
+
+      try {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const res = await api.get(`/products/${id}`);
+        setProduct(res.data);
+      } catch (err: any) {
+        console.error(`Error fetching product with ID ${id}:`, err?.response?.data || err.message);
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    fetchProduct();
+  }, [token, id]);
+
+  // Download product image to local cache
+  useEffect(() => {
+    const fetchImage = async () => {
+      if (!token || !product?.image) {
+        console.log(`Waiting for token and product.image. Token: ${!!token}, Image: ${product?.image}`);
+        return;
+      }
+
+      try {
+        const imageUrl = `${api.defaults.baseURL}products/images/${product.image}`;
+        const localUri = `${FileSystem.cacheDirectory}${product.image}`;
+
+        console.log('Downloading image from:', imageUrl);
+
+        const { uri } = await FileSystem.downloadAsync(imageUrl, localUri, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'image/*',
+          },
+        });
+
+        console.log('Downloaded image to:', uri);
+        setLocalImageUri(uri);
+      } catch (err: any) {
+        console.error('Error downloading image:', err?.message || err);
+        setLocalImageUri(null); // fallback
+      } finally {
+        setLoadingImage(false);
+      }
+    };
+
+    fetchImage();
+  }, [token, product?.image]);
+
+  const handleAddToCart = () => {
+    if (product) {
+      Alert.alert(`${product.name} added to cart!`);
     }
   };
 
-  const handleAddToCart = () => {
-    // You may want to add this to a global cart store or backend here
-    Alert.alert(`${name} added to cart!`);
-  };
+  // Show loading screen
+  if (loadingProduct) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4caf50" />
+      </View>
+    );
+  }
 
-  return (
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: String(imageUrl) }} style={styles.image} />
-      <View style={styles.content}>
-        <Text style={styles.title}>{name}</Text>
-        <Text style={styles.price}>${Number(price).toFixed(2)}</Text>
-        {discount && (
-          <Text style={styles.discount}>
-            {Number(discount) * 100}% OFF
-          </Text>
-        )}
-        <Text style={styles.description}>{description}</Text>
-
-        <Text style={styles.label}>Supplier</Text>
-        <Text style={styles.supplier}>{supplier}</Text>
-
-        <TouchableOpacity style={styles.linkButton} onPress={handleVisitSupplier}>
-          <Text style={styles.linkButtonText}>🌐 Visit Supplier</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
-          <Text style={styles.cartButtonText}>🛒 Add to Cart</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>🔙 Back</Text>
+  // Show error if product not found
+  if (!product) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: '#fff' }}>Product not found.</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go Back</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    );
+  }
+
+  return (
+    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {loadingImage ? (
+          <ActivityIndicator size="large" color="#4caf50" style={{ height: 300 }} />
+        ) : localImageUri ? (
+          <Image source={{ uri: localImageUri }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ color: '#666' }}>Image not available</Text>
+          </View>
+        )}
+
+        <View style={styles.card}>
+          <Text style={styles.title}>{product.name}</Text>
+          <Text style={styles.price}>${Number(product.price).toFixed(2)}</Text>
+
+          {product.discount && (
+            <Text style={styles.discount}>
+              {Number(product.discount) * 100}% OFF
+            </Text>
+          )}
+
+          <Text style={styles.description}>{product.description}</Text>
+
+          <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
+            <Text style={styles.cartButtonText}>🛒 Add to Cart</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#e8f5e9',
+    padding: 16,
+  },
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#a8e6cf',
   },
   image: {
     width: '100%',
     height: 300,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+    backgroundColor: '#e0f2f1',
   },
-  content: {
-    padding: 16,
+  card: {
+    backgroundColor: '#ffffffdd',
+    marginTop: -24,
+    padding: 20,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1b5e20',
     marginBottom: 8,
   },
@@ -111,32 +205,10 @@ const styles = StyleSheet.create({
     color: '#444',
     marginBottom: 16,
   },
-  label: {
-    fontSize: 14,
-    color: '#777',
-    marginTop: 8,
-  },
-  supplier: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 16,
-  },
-  linkButton: {
-    backgroundColor: '#81c784',
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  linkButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-  },
   cartButton: {
     backgroundColor: '#4caf50',
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -147,13 +219,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: '#c8e6c9',
-    padding: 10,
+    padding: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
   },
   backButtonText: {
     fontSize: 14,
     color: '#2e7d32',
+    fontWeight: '700',
   },
 });
