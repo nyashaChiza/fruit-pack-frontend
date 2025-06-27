@@ -66,15 +66,12 @@ export default function FruitDetail() {
   useEffect(() => {
     const fetchImage = async () => {
       if (!token || !product?.image) {
-        console.log(`Waiting for token and product.image. Token: ${!!token}, Image: ${product?.image}`);
         return;
       }
 
       try {
         const imageUrl = `${api.defaults.baseURL}products/images/${product.image}`;
         const localUri = `${FileSystem.cacheDirectory}${product.image}`;
-
-        console.log('Downloading image from:', imageUrl);
 
         const { uri } = await FileSystem.downloadAsync(imageUrl, localUri, {
           headers: {
@@ -83,7 +80,6 @@ export default function FruitDetail() {
           },
         });
 
-        console.log('Downloaded image to:', uri);
         setLocalImageUri(uri);
       } catch (err: any) {
         console.error('Error downloading image:', err?.message || err);

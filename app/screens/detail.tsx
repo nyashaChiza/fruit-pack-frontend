@@ -19,8 +19,7 @@ export default function FruitDetail() {
     description,
     supplier,
     imageUrl,
-    supplierUrl,
-    createdAt,
+    supplierUrl
   } = useLocalSearchParams();
 
   const router = useRouter();

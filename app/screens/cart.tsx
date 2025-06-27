@@ -19,7 +19,7 @@ export default function CartScreen() {
   const router = useRouter();
 
   const handleCheckout = () => {
-    Alert.alert('Checkout', 'Proceeding to checkout...');
+    router.push('screens/checkout');
   };
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
