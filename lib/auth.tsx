@@ -3,6 +3,9 @@ import api from './api';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
+import { jwtDecode } from "jwt-decode"
+
+
 export async function login(username: string, password: string): Promise<string> {
   try {
     const formData = new URLSearchParams();
@@ -53,4 +56,14 @@ export const getToken = async (): Promise<string | null> => {
 
 export async function saveToken(token: string) {
   await SecureStore.setItemAsync('token', token); // ✅ Correct usage
+}
+
+export function getUserId(token: string): string | null {
+  try {
+    const decoded = jwtDecode(token);
+    return decoded.sub || null;
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
 }

@@ -30,9 +30,9 @@ export default function CheckoutScreen() {
   // ✅ Deep link listener for Stripe returnURL
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
-      if (url.includes('checkout-complete')) {
+      if (url.includes('orders')) {
         Alert.alert('✅ Payment Completed via Redirect');
-        router.replace('/screens/home'); // Optional redirect after payment
+        router.replace('/screens/orders'); // Optional redirect after payment
       }
     };
 
@@ -70,7 +70,7 @@ export default function CheckoutScreen() {
       const { order_id, client_secret, amount } = response.data;
 
       if (selectedMethod === 'card') {
-        const init = await initPaymentSheet({ paymentIntentClientSecret: client_secret, returnURL: 'fruitpack://order' });
+        const init = await initPaymentSheet({ paymentIntentClientSecret: client_secret, returnURL: 'fruitpack://orders' });
 
         if (init.error) {
           throw new Error(init.error.message);
@@ -89,7 +89,7 @@ export default function CheckoutScreen() {
       }
 
       clearCart();
-      router.replace('/screens/home');
+      router.replace('/screens/orders');
     } catch (err: any) {
       console.error('Checkout error:', err.response?.data || err.message);
       Alert.alert('❌ Error', err.response?.data?.detail || 'Something went wrong.');

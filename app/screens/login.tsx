@@ -32,6 +32,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null); // <-- Add this line
   const router = useRouter();
 
   async function handleLogin() {
@@ -42,13 +43,16 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      const token = await login(username, password);
+      const response = await login(username, password);
+      
+
+      // Save user details in state
+      setUser(response); // <-- Save user info
 
       Alert.alert('Login successful', 'Welcome back!');
       router.replace('/screens/home');
     } catch (err: any) {
       Alert.alert('Login failed', err?.response?.data?.detail || 'Unknown error');
-      // Stay on login page; optionally, you can reset fields or highlight errors here
     } finally {
       setLoading(false);
     }

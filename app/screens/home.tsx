@@ -140,7 +140,10 @@ export default function Home() {
             <Text style={styles.navText}>🏠 Home</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/screens/cart')}>
-          <Text style={styles.navText}>🛒 Cart</Text>
+            <Text style={styles.navText}>🛒 Cart</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+            <Text style={styles.navText}>📦 Orders</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={async () => {
