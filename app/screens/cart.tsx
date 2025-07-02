@@ -14,16 +14,18 @@ import { useCart } from '../../lib/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import api from '../../lib/api';
+import { getToken, logout } from '../../lib/auth';
+
+const { width } = Dimensions.get('window');
 
 export default function CartScreen() {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // Load custom fonts
   useEffect(() => {
     Font.loadAsync({
-      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
+      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
     }).then(() => setFontsLoaded(true));
   }, []);
 
@@ -36,76 +38,97 @@ export default function CartScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>🛒 Your Cart</Text>
+    <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.heading}>🛒 Your Cart</Text>
 
-        {cart.length === 0 ? (
-          <Text style={styles.emptyText}>Your cart is empty.</Text>
-        ) : (
-          cart.map((item) => (
-            <View key={item.id} style={styles.card}>
-              <Image
-                source={{ uri: `${api.defaults.baseURL}/products/images/${item.image_name}` }}
-                style={styles.image}
-              />
-              <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>R{item.price.toFixed(2)}</Text>
+          {cart.length === 0 ? (
+            <Text style={styles.emptyText}>Your cart is empty.</Text>
+          ) : (
+            cart.map((item) => (
+              <View key={item.id} style={styles.card}>
+                <Image
+                  source={{ uri: `${api.defaults.baseURL}products/images/${item.image_name}` }}
+                  style={styles.image}
+                />
+                <View style={styles.info}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.price}>R{item.price.toFixed(2)}</Text>
 
-                <View style={styles.controls}>
+                  <View style={styles.controls}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        updateQuantity(item.id, Math.max(item.quantity - 1, 1))
+                      }
+                      style={styles.qtyButton}
+                    >
+                      <Text style={styles.qtyText}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.qtyCount}>{item.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                      style={styles.qtyButton}
+                    >
+                      <Text style={styles.qtyText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
                   <TouchableOpacity
-                    onPress={() =>
-                      updateQuantity(item.id, Math.max(item.quantity - 1, 1))
-                    }
-                    style={styles.qtyButton}
+                    onPress={() => removeFromCart(item.id)}
+                    style={styles.removeButton}
                   >
-                    <Text style={styles.qtyText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.qtyCount}>{item.quantity}</Text>
-                  <TouchableOpacity
-                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                    style={styles.qtyButton}
-                  >
-                    <Text style={styles.qtyText}>+</Text>
+                    <Text style={styles.removeButtonText}>🗑 Remove</Text>
                   </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity
-                  onPress={() => removeFromCart(item.id)}
-                  style={styles.removeButton}
-                >
-                  <Text style={styles.removeButtonText}>🗑 Remove Item</Text>
-                </TouchableOpacity>
               </View>
-            </View>
-          ))
+            ))
+          )}
+        </ScrollView>
+
+        {/* Checkout Summary */}
+        {cart.length > 0 && (
+          <View style={styles.checkoutCard}>
+            <Text style={styles.total}>Total: R{total.toFixed(2)}</Text>
+
+            <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+              <Text style={styles.checkoutText}>Checkout</Text>
+            </TouchableOpacity>
+
+            
+          </View>
         )}
-      </ScrollView>
 
-      {cart.length > 0 && (
-        <View style={styles.checkoutCard}>
-          <Text style={styles.total}>Total: R{total.toFixed(2)}</Text>
-
-          <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-            <Text style={styles.checkoutText}>Checkout</Text>
+        {/* Fixed Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity onPress={() => router.push('/screens/home')}>
+            <Text style={styles.navText}>🏠 Home</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Back </Text>
+          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+            <Text style={styles.navText}>🛒 Cart</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+            <Text style={styles.navText}>📦 Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              await logout();
+              router.replace('/screens/login');
+            }}
+          >
+            <Text style={styles.navText}>👤 Logout</Text>
           </TouchableOpacity>
         </View>
-      )}
+      </View>
     </LinearGradient>
   );
 }
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 120, // for bottom card space
+    paddingTop: 50,
+    paddingBottom: 220, // space for nav + checkout
   },
   heading: {
     fontSize: 28,
@@ -175,10 +198,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   removeButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#e64e43',
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 7,
     marginTop: 10,
     alignSelf: 'flex-start',
   },
@@ -189,10 +212,11 @@ const styles = StyleSheet.create({
   },
   checkoutCard: {
     position: 'absolute',
-    bottom: 0,
-    width,
-    backgroundColor: '#ffffffee',
+    bottom: 80, // leave space for nav
     padding: 16,
+    width: width-16,
+    left: 8,
+    backgroundColor: '#ffffffee',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     shadowColor: '#000',
@@ -229,6 +253,25 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#fff',
     fontSize: 15,
+    fontWeight: '600',
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 25,
+    left: 5,
+    right: 5,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    borderTopColor: '#ddd',
+    borderTopWidth: 1,
+    zIndex: 100,
+    elevation: 10,
+  },
+  navText: {
+    fontSize: 16,
+    color: '#4CAF50',
     fontWeight: '600',
   },
 });

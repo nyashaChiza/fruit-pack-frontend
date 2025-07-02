@@ -1,3 +1,4 @@
+// screens/products/[id].tsx
 import {
   View,
   Text,
@@ -12,7 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import * as FileSystem from 'expo-file-system';
 import api from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { getToken, logout } from '../../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCart } from '../../../lib/CartContext';
 import * as Font from 'expo-font';
@@ -29,8 +30,6 @@ export default function FruitDetail() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const { addToCart } = useCart();
 
-
-  // Fetch user token
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -43,11 +42,9 @@ export default function FruitDetail() {
     fetchToken();
   }, []);
 
-  // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       if (!token || !id) return;
-
       try {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const res = await api.get(`/products/${id}`);
@@ -58,39 +55,37 @@ export default function FruitDetail() {
         setLoadingProduct(false);
       }
     };
-
     fetchProduct();
   }, [token, id]);
 
-  // Download product image to local cache
   useEffect(() => {
     const fetchImage = async () => {
-      if (!token || !product?.image) {
-        return;
-      }
-
+      if (!token || !product?.image) return;
       try {
         const imageUrl = `${api.defaults.baseURL}products/images/${product.image}`;
         const localUri = `${FileSystem.cacheDirectory}${product.image}`;
-
         const { uri } = await FileSystem.downloadAsync(imageUrl, localUri, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'image/*',
           },
         });
-
         setLocalImageUri(uri);
       } catch (err: any) {
         console.error('Error downloading image:', err?.message || err);
-        setLocalImageUri(null); // fallback
+        setLocalImageUri(null);
       } finally {
         setLoadingImage(false);
       }
     };
-
     fetchImage();
   }, [token, product?.image]);
+
+  useEffect(() => {
+    Font.loadAsync({
+      'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
+    }).then(() => setFontsLoaded(true));
+  }, []);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -98,19 +93,11 @@ export default function FruitDetail() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image_name: product.image_name,
+      image_name: product.image,
     });
     Alert.alert(`${product.name} added to cart!`);
   };
 
-  // Load custom fonts
-  useEffect(() => {
-    Font.loadAsync({
-      'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
-    }).then(() => setFontsLoaded(true));
-  }, []);
-
-  // Show loading screen
   if (loadingProduct || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -119,7 +106,6 @@ export default function FruitDetail() {
     );
   }
 
-  // Show error if product not found
   if (!product) {
     return (
       <View style={styles.loadingContainer}>
@@ -132,41 +118,59 @@ export default function FruitDetail() {
   }
 
   return (
-    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {loadingImage ? (
-          <ActivityIndicator size="large" color="#4caf50" style={{ height: 300 }} />
-        ) : localImageUri ? (
-          <Image source={{ uri: localImageUri }} style={styles.image} />
-        ) : (
-          <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Text style={{ color: '#666' }}>Image not available</Text>
-          </View>
-        )}
-
-        <View style={styles.card}>
-          <Text style={styles.title}>{product.name}</Text>
-          <Text style={styles.price}>R{Number(product.price).toFixed(2)}</Text>
-          
-
-          {product.discount && (
-            <Text style={styles.discount}>
-              {Number(product.discount) * 100}% OFF
-            </Text>
+    <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          {loadingImage ? (
+            <ActivityIndicator size="large" color="#4caf50" style={{ height: 300 }} />
+          ) : localImageUri ? (
+            <Image source={{ uri: localImageUri }} style={styles.image} />
+          ) : (
+            <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ color: '#666' }}>Image not available</Text>
+            </View>
           )}
 
-          <Text style={styles.description}>{product.description}</Text>
-          <Text style={styles.category}>{product.category_name}</Text>
+          <View style={styles.card}>
+            <Text style={styles.title}>{product.name}</Text>
+            <Text style={styles.price}>R{Number(product.price).toFixed(2)}</Text>
+            {product.discount && (
+              <Text style={styles.discount}>{Number(product.discount) * 100}% OFF</Text>
+            )}
+            <Text style={styles.description}>{product.description}</Text>
+            <Text style={styles.category}>{product.category_name}</Text>
 
-          <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
-            <Text style={styles.cartButtonText}>🛒 Add to Cart</Text>
+            <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
+              <Text style={styles.cartButtonText}>🛒 Add to Cart</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity onPress={() => router.push('/screens/home')}>
+            <Text style={styles.navText}>🏠 Home</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Back</Text>
+          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+            <Text style={styles.navText}>🛒 Cart</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+            <Text style={styles.navText}>📦 Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              await logout();
+              router.replace('/screens/login');
+            }}
+          >
+            <Text style={styles.navText}>👤 Logout</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </LinearGradient>
   );
 }
@@ -174,6 +178,7 @@ export default function FruitDetail() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    paddingBottom: 120,
   },
   loadingContainer: {
     flex: 1,
@@ -190,7 +195,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffffdd',
-    marginTop: 34, // 👈 this pulls the card *up* over the image
+    marginTop: 34,
     padding: 20,
     borderRadius: 24,
     shadowColor: '#000',
@@ -199,7 +204,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-
   title: {
     fontSize: 28,
     fontWeight: '700',
@@ -248,5 +252,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2e7d32',
     fontWeight: '700',
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 17,
+    left: 5,
+    right: 5,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    borderTopColor: '#ddd',
+    borderTopWidth: 1,
+    zIndex: 100,
+    elevation: 10,
+  },
+  navText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
 });

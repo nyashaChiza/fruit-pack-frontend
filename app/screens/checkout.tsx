@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { CartContext } from '../../lib/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../lib/api';
-import { getToken } from '../../lib/auth';
+import { getToken, logout } from '../../lib/auth';
 import { useStripe } from '@stripe/stripe-react-native';
 import * as Font from 'expo-font';
 
@@ -25,22 +25,28 @@ export default function CheckoutScreen() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash' |  null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash' | null>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  // ✅ Deep link listener for Stripe returnURL
+
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
       if (url.includes('orders')) {
         Alert.alert('✅ Payment Completed via Redirect');
-        router.replace('/screens/orders'); // Optional redirect after payment
+        router.replace('/screens/orders');
       }
     };
-
     const subscription = Linking.addEventListener('url', handleDeepLink);
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    Font.loadAsync({
+      MyFont: require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
+    }).then(() => setFontsLoaded(true));
+  }, []);
+
   const handlePlaceOrder = async () => {
     if (!name || !address || !phone || !selectedMethod) {
       Alert.alert('Missing Info', 'Please fill in all fields and select a payment method.');
@@ -73,14 +79,14 @@ export default function CheckoutScreen() {
       const { order_id, client_secret, amount } = response.data;
 
       if (selectedMethod === 'card') {
-        const init = await initPaymentSheet({ paymentIntentClientSecret: client_secret, returnURL: 'fruitpack://orders' });
+        const init = await initPaymentSheet({
+          paymentIntentClientSecret: client_secret,
+          returnURL: 'fruitpack://orders',
+        });
 
-        if (init.error) {
-          throw new Error(init.error.message);
-        }
+        if (init.error) throw new Error(init.error.message);
 
         const result = await presentPaymentSheet();
-
         if (result.error) {
           Alert.alert('Payment Failed', result.error.message);
           return;
@@ -99,86 +105,97 @@ export default function CheckoutScreen() {
     }
   };
 
-  // Load custom fonts
-  useEffect(() => {
-    Font.loadAsync({
-      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
-    }).then(() => setFontsLoaded(true));
-  }, []);
-
   if (!fontsLoaded) return null;
 
   return (
     <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Checkout</Text>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.header}>Checkout</Text>
 
-        {/* Order Summary */}
-        <View style={styles.card}>
-          <Text style={styles.subHeader}>Order Summary</Text>
-          {cartItems.map((item, index) => (
-            <View key={index} style={styles.itemRow}>
-              <Text style={styles.itemText}>{item.name} × {item.quantity}</Text>
-              <Text style={styles.itemText}>R{(item.price * item.quantity).toFixed(2)}</Text>
+          <View style={styles.card}>
+            <Text style={styles.subHeader}>Order Summary</Text>
+            {cartItems.map((item, index) => (
+              <View key={index} style={styles.itemRow}>
+                <Text style={styles.itemText}>
+                  {item.name} × {item.quantity}
+                </Text>
+                <Text style={styles.itemText}>R{(item.price * item.quantity).toFixed(2)}</Text>
+              </View>
+            ))}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalText}>Total:</Text>
+              <Text style={styles.totalText}>R{total.toFixed(2)}</Text>
             </View>
-          ))}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalText}>Total:</Text>
-            <Text style={styles.totalText}>R{total.toFixed(2)}</Text>
           </View>
+
+          <View style={styles.card}>
+            <Text style={styles.subHeader}>Shipping Information</Text>
+            <TextInput
+              placeholder="Full Name"
+              value={name}
+              onChangeText={setName}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Shipping Address"
+              value={address}
+              onChangeText={setAddress}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.subHeader}>Select Payment Method</Text>
+            {['card', 'cash'].map(method => (
+              <TouchableOpacity
+                key={method}
+                style={[
+                  styles.paymentOption,
+                  selectedMethod === method && styles.paymentOptionSelected,
+                ]}
+                onPress={() => setSelectedMethod(method as any)}
+              >
+                <Text style={styles.paymentText}>{method.toUpperCase()}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.confirmButton} onPress={handlePlaceOrder}>
+            <Text style={styles.confirmButtonText}>Place Order</Text>
+          </TouchableOpacity>
+
+          
+        </ScrollView>
+
+        {/* Fixed Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity onPress={() => router.push('/screens/home')}>
+            <Text style={styles.navText}>🏠 Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+            <Text style={styles.navText}>🛒 Cart</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+            <Text style={styles.navText}>📦 Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              await logout();
+              router.replace('/screens/login');
+            }}
+          >
+            <Text style={styles.navText}>👤 Logout</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* Shipping Info */}
-        <View style={styles.card}>
-          <Text style={styles.subHeader}>Shipping Information</Text>
-          <TextInput
-            placeholder="Full Name"
-            value={name}
-            onChangeText={setName}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Shipping Address"
-            value={address}
-            onChangeText={setAddress}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            style={styles.input}
-          />
-        </View>
-
-        {/* Payment Method */}
-        <View style={styles.card}>
-          <Text style={styles.subHeader}>Select Payment Method</Text>
-          {['card', 'cash'].map((method) => (
-            <TouchableOpacity
-              key={method}
-              style={[
-                styles.paymentOption,
-                selectedMethod === method && styles.paymentOptionSelected,
-              ]}
-              onPress={() => setSelectedMethod(method as any)}
-            >
-              <Text style={styles.paymentText}>{method.toUpperCase()}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Confirm Order */}
-        <TouchableOpacity style={styles.confirmButton} onPress={handlePlaceOrder}>
-          <Text style={styles.confirmButtonText}>Place Order</Text>
-        </TouchableOpacity>
-
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      </View>
     </LinearGradient>
   );
 }
@@ -186,7 +203,7 @@ export default function CheckoutScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 160, // room for nav
   },
   header: {
     fontSize: 28,
@@ -272,6 +289,23 @@ const styles = StyleSheet.create({
   paymentText: {
     fontSize: 16,
   },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 15,
+    left: 6,
+    right: 6,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    borderTopColor: '#ddd',
+    borderTopWidth: 1,
+    zIndex: 100,
+    elevation: 10,
+  },
+  navText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
 });
-// This code defines a CheckoutScreen component that allows users to review their cart items, enter shipping information, select a payment method, and place an order. It uses the Stripe API for card payments and handles errors gracefully. The UI is styled with React Native's StyleSheet and includes a linear gradient background for aesthetics.
-// The component also integrates with a CartContext to manage cart state and uses Expo Router for navigation

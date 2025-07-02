@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import api from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { getToken, logout } from '../../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Font from 'expo-font';
 
@@ -23,10 +23,9 @@ export default function OrderDetailScreen() {
   const [token, setToken] = useState(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // Load custom fonts
   useEffect(() => {
     Font.loadAsync({
-      'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
+      'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
     }).then(() => setFontsLoaded(true));
   }, []);
 
@@ -40,7 +39,6 @@ export default function OrderDetailScreen() {
 
   useEffect(() => {
     if (!token || !orderId) return;
-
     const fetchOrder = async () => {
       try {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -74,14 +72,11 @@ export default function OrderDetailScreen() {
     );
   }
 
-  if (!order) {
+  if (!order || !fontsLoaded) {
     return (
-      <View style={[styles.loadingContainer, { justifyContent: 'center' }]}>
+      <View style={styles.loadingContainer}>
         <Text style={{ color: '#1b5e20', fontSize: 16 }}>No order data found.</Text>
-        <TouchableOpacity
-          style={[styles.backButton, { marginTop: 20, alignSelf: 'center' }]}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={[styles.backButton, { marginTop: 20 }]} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -90,118 +85,116 @@ export default function OrderDetailScreen() {
 
   const statuses = [
     { key: 'pending', label: 'Paid', description: 'Payment received' },
-    { key: 'processing', label: 'Processing', description: 'Product being prepared for delivery' },
-    { key: 'shipped', label: 'Shipped', description: 'Product on the way' },
+    { key: 'processing', label: 'Processing', description: 'Preparing for delivery' },
+    { key: 'shipped', label: 'Shipped', description: 'On the way' },
     { key: 'delivered', label: 'Delivered', description: 'Product delivered' },
     { key: 'completed', label: 'Completed', description: 'Order completed' },
   ];
-
   const currentStatusIndex = statuses.findIndex(s => s.key === order.delivery_status);
-
-  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <LinearGradient
-        colors={['#a8e6cf', '#56ab2f']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-          <Text style={styles.heading}>Order Details</Text>
+      <LinearGradient colors={['#a8e6cf', '#56ab2f']} style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <Text style={styles.heading}>Order Details</Text>
 
-          {/* Order Details Card */}
-          <View style={styles.card}>
-            <Text style={styles.title}>Order ID: {order.id}</Text>
-            <Text style={styles.price}>Total: R{order.total.toFixed(2)}</Text>
-            <Text style={{ marginBottom: 8 }}>
-              Date: {new Date(order.created).toLocaleString()}
-            </Text>
-            <Text>Delivery Status: <Text style={{ fontWeight: '700', color: '#2e7d32' }}>{order.delivery_status}</Text></Text>
-            <Text>Payment Status: <Text style={{ fontWeight: '700', color: '#2e7d32' }}>{order.payment_status}</Text></Text>
-          </View>
+            {/* Order Info Card */}
+            <View style={styles.card}>
+              <Text style={styles.title}>Order ID: {order.id}</Text>
+              <Text style={styles.price}>Total: R{order.total.toFixed(2)}</Text>
+              <Text>Date: {new Date(order.created).toLocaleString()}</Text>
+              <Text>Delivery Status: <Text style={styles.status}>{order.delivery_status}</Text></Text>
+              <Text>Payment Status: <Text style={styles.status}>{order.payment_status}</Text></Text>
+            </View>
 
-          {/* Order Items Card */}
-          <View style={styles.card}>
-            <Text style={styles.subheading}>Items</Text>
-            {order.items && order.items.length > 0 ? (
-              order.items.map(item => (
-                <View key={item.id} style={styles.item}>
-                  <Text style={{ fontWeight: '600' }}>Product: {item.name}</Text>
-                  <Text>Quantity: {item.quantity}</Text>
-                  <Text>Price: R{item.price.toFixed(2)}</Text>
-                </View>
-              ))
-            ) : (
-              <Text>No items found.</Text>
-            )}
-          </View>
+            {/* Order Items */}
+            <View style={styles.card}>
+              <Text style={styles.subheading}>Items</Text>
+              {order.items?.length > 0 ? (
+                order.items.map(item => (
+                  <View key={item.id} style={styles.item}>
+                    <Text style={{ fontWeight: '600' }}>Product: {item.name}</Text>
+                    <Text>Quantity: {item.quantity}</Text>
+                    <Text>Price: R{item.price.toFixed(2)}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text>No items found.</Text>
+              )}
+            </View>
 
-          {/* Order Status Timeline + Buttons Card */}
-          <View style={styles.card}>
-            <Text style={styles.subheading}>Order Status Timeline</Text>
-            {statuses.map((status, index) => (
-              <View
-                key={status.key}
-                style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}
-              >
-                <View
-                  style={[
-                    styles.statusCircle,
-                    { backgroundColor: index <= currentStatusIndex ? '#388e3c' : '#9e9e9e' },
-                  ]}
-                />
-                <View style={{ marginLeft: 12 }}>
-                  <Text
-                    style={{
+            {/* Timeline + Buttons */}
+            <View style={styles.card}>
+              <Text style={styles.subheading}>Order Status Timeline</Text>
+              {statuses.map((status, index) => (
+                <View key={status.key} style={styles.timelineItem}>
+                  <View
+                    style={[
+                      styles.statusCircle,
+                      { backgroundColor: index <= currentStatusIndex ? '#388e3c' : '#9e9e9e' },
+                    ]}
+                  />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={{
                       color: index <= currentStatusIndex ? '#2e7d32' : '#757575',
                       fontWeight: index === currentStatusIndex ? '700' : '400',
-                    }}
-                  >
-                    {status.label}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: '#555' }}>{status.description}</Text>
+                    }}>
+                      {status.label}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#555' }}>{status.description}</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
 
-            {order.delivery_status === 'delivered' && (
-              <TouchableOpacity style={styles.cartButton} onPress={confirmDelivery}>
-                <Text style={styles.cartButtonText}>Confirm Delivery</Text>
+              {order.delivery_status === 'delivered' && (
+                <TouchableOpacity style={styles.cartButton} onPress={confirmDelivery}>
+                  <Text style={styles.cartButtonText}>Confirm Delivery</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
-            )}
+            </View>
+          </ScrollView>
 
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>Back</Text>
+          {/* Bottom Navigation */}
+          <View style={styles.bottomNav}>
+            <TouchableOpacity onPress={() => router.push('/screens/home')}>
+              <Text style={styles.navText}>🏠 Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+              <Text style={styles.navText}>🛒 Cart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+              <Text style={styles.navText}>📦 Orders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => {
+                await logout();
+                router.replace('/screens/login');
+              }}
+            >
+              <Text style={styles.navText}>👤 Logout</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-  },
+  container: { padding: 16, paddingBottom: 120 },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#a8e6cf',
+    flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#a8e6cf',
   },
   card: {
     backgroundColor: '#ffffffdd',
     marginTop: 24,
     padding: 20,
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 5,
   },
   heading: {
@@ -241,6 +234,15 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
   },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  status: {
+    fontWeight: '700',
+    color: '#2e7d32',
+  },
   cartButton: {
     backgroundColor: '#4caf50',
     padding: 14,
@@ -264,5 +266,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2e7d32',
     fontWeight: '700',
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    borderTopColor: '#ddd',
+    borderTopWidth: 1,
+    zIndex: 100,
+    elevation: 10,
+  },
+  navText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
 });

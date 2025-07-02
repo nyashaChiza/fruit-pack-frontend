@@ -107,50 +107,57 @@ export default function Home() {
 
   if (!fontsLoaded) return null;
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        
-        <View style={styles.header}>
-          <View style={styles.searchBox}>
-            <TextInput
-              placeholder="Search fruits..."
-              placeholderTextColor="#4CAF50"
-              style={styles.searchInput}
-            />
+return (
+  <SafeAreaView style={styles.safeArea}>
+    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Search + Banner + Categories + Popular Fruits */}
+          <View style={styles.header}>
+            <View style={styles.searchBox}>
+              <TextInput
+                placeholder="Search fruits..."
+                placeholderTextColor="#4CAF50"
+                style={styles.searchInput}
+              />
+            </View>
           </View>
-          
-        </View>
 
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.banner}>
-          {bannerImages.map((img, index) => (
-  <Image key={index} source={img} style={styles.bannerImage} />
-))}
-        </ScrollView>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Categories</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories.map(cat => (
-              <View key={cat.id} style={styles.categoryCard}>
-                <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                <Text style={styles.categoryText}>{cat.name}</Text>
-              </View>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={styles.banner}
+          >
+            {bannerImages.map((img, index) => (
+              <Image key={index} source={img} style={styles.bannerImage} />
             ))}
           </ScrollView>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular Fruits</Text>
-          <FlatList
-            data={fruits}
-            renderItem={renderFruitItem}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-          />
-        </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {categories.map((cat) => (
+                <View key={cat.id} style={styles.categoryCard}>
+                  <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                  <Text style={styles.categoryText}>{cat.name}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Popular Fruits</Text>
+            <FlatList
+              data={fruits}
+              renderItem={renderFruitItem}
+              keyExtractor={(item) => item.id.toString()}
+              scrollEnabled={false}
+            />
+          </View>
+        </ScrollView>
+
+        {/* Fixed Bottom Navigation */}
         <View style={styles.bottomNav}>
           <TouchableOpacity onPress={() => router.push('/screens/home')}>
             <Text style={styles.navText}>🏠 Home</Text>
@@ -170,11 +177,11 @@ export default function Home() {
             <Text style={styles.navText}>👤 Logout</Text>
           </TouchableOpacity>
         </View>
-        
-      </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
-  );
+      </View>
+    </LinearGradient>
+  </SafeAreaView>
+);
+
 }
 
 const styles = StyleSheet.create({
@@ -234,7 +241,7 @@ const styles = StyleSheet.create({
     padding: 12,
     paddingHorizontal: 18,
     borderRadius: 12,
-    marginRight: 12,
+    marginRight: 18,
     elevation: 2,
   },
   categoryIcon: {
@@ -283,7 +290,7 @@ const styles = StyleSheet.create({
     color: '#555',
     marginTop: 4,
   },
-  bottomNav: {
+bottomNav: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -291,7 +298,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 16,
+    paddingVertical: 12,
     borderTopColor: '#ddd',
     borderTopWidth: 1,
     zIndex: 100,
