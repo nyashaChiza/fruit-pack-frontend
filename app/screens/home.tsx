@@ -14,12 +14,16 @@ import api from '../../lib/api';
 import { getToken, logout } from '../../lib/auth';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Font from 'expo-font';
 
 const { width } = Dimensions.get('window');
 
 const bannerImages = [
-  'https://img.freepik.com/premium-vector/fresh-fruit-sale-banner-design_1302-28371.jpg',
-  'https://img.freepik.com/premium-vector/tropical-fruits-sale-banner-template_1302-28418.jpg',
+  require('../static/images/1.png'),
+  require('../static/images/2.jpg'),
+  require('../static/images/3.jpg'),
+  require('../static/images/4.jpg'),
 ];
 
 export default function Home() {
@@ -27,6 +31,7 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [fruits, setFruits] = useState([]);
   const [token, setToken] = useState<string | null>(null);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchToken() {
@@ -72,6 +77,12 @@ export default function Home() {
     fetchFruits();
   }, [token]);
 
+  useEffect(() => {
+    Font.loadAsync({
+      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
+    }).then(() => setFontsLoaded(true));
+  }, []);
+
   const handleFruitPress = (item) => {
     router.push({
       pathname: 'screens/details/[id]',
@@ -81,18 +92,26 @@ export default function Home() {
 
   const renderFruitItem = ({ item }) => (
     <TouchableOpacity style={styles.productCard} onPress={() => handleFruitPress(item)}>
-      <Image source={{ uri: item.image_url }} style={styles.productImage} />
+      <Image
+      source={{ uri: `${api.defaults.baseURL}products/images/${item.image}` }}
+      style={styles.productImage}
+      />
       <View style={styles.productDetails}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productPrice}>${item.price?.toFixed(2)}</Text>
-        <Text style={styles.productDescription}>{item.description}</Text>
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productPrice}>R{item.price?.toFixed(2)}</Text>
+      <Text style={styles.productDescription}>{item.description}</Text>
+      <Text style={styles.productCategory}>{item.category_name}</Text>
       </View>
     </TouchableOpacity>
   );
 
+  if (!fontsLoaded) return null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
+        
         <View style={styles.header}>
           <View style={styles.searchBox}>
             <TextInput
@@ -101,16 +120,13 @@ export default function Home() {
               style={styles.searchInput}
             />
           </View>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/300' }}
-            style={styles.avatar}
-          />
+          
         </View>
 
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.banner}>
-          {bannerImages.map((uri, index) => (
-            <Image key={index} source={{ uri }} style={styles.bannerImage} />
-          ))}
+          {bannerImages.map((img, index) => (
+  <Image key={index} source={img} style={styles.bannerImage} />
+))}
         </ScrollView>
 
         <View style={styles.section}>
@@ -154,7 +170,9 @@ export default function Home() {
             <Text style={styles.navText}>👤 Logout</Text>
           </TouchableOpacity>
         </View>
+        
       </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -254,6 +272,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '400',
     color: '#2f332e',
+  },
+    productCategory: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1f241e',
   },
   productPrice: {
     fontSize: 16,

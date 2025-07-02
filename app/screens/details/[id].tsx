@@ -15,6 +15,7 @@ import api from '../../../lib/api';
 import { getToken } from '../../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCart } from '../../../lib/CartContext';
+import * as Font from 'expo-font';
 
 export default function FruitDetail() {
   const { id } = useLocalSearchParams();
@@ -25,9 +26,8 @@ export default function FruitDetail() {
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [loadingImage, setLoadingImage] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const { addToCart } = useCart();
-
-
 
 
   // Fetch user token
@@ -103,8 +103,15 @@ export default function FruitDetail() {
     Alert.alert(`${product.name} added to cart!`);
   };
 
+  // Load custom fonts
+  useEffect(() => {
+    Font.loadAsync({
+      'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
+    }).then(() => setFontsLoaded(true));
+  }, []);
+
   // Show loading screen
-  if (loadingProduct) {
+  if (loadingProduct || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4caf50" />
@@ -139,7 +146,8 @@ export default function FruitDetail() {
 
         <View style={styles.card}>
           <Text style={styles.title}>{product.name}</Text>
-          <Text style={styles.price}>${Number(product.price).toFixed(2)}</Text>
+          <Text style={styles.price}>R{Number(product.price).toFixed(2)}</Text>
+          
 
           {product.discount && (
             <Text style={styles.discount}>
@@ -148,6 +156,7 @@ export default function FruitDetail() {
           )}
 
           <Text style={styles.description}>{product.description}</Text>
+          <Text style={styles.category}>{product.category_name}</Text>
 
           <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
             <Text style={styles.cartButtonText}>🛒 Add to Cart</Text>
@@ -210,6 +219,11 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: '#444',
+  },
+  category: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f241e',
     marginBottom: 16,
   },
   cartButton: {

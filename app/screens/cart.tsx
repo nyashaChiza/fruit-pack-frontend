@@ -8,7 +8,8 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import { useCart } from '../../lib/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -17,12 +18,22 @@ import api from '../../lib/api';
 export default function CartScreen() {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const router = useRouter();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // Load custom fonts
+  useEffect(() => {
+    Font.loadAsync({
+      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
+    }).then(() => setFontsLoaded(true));
+  }, []);
 
   const handleCheckout = () => {
     router.push('screens/checkout');
   };
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (!fontsLoaded) return null;
 
   return (
     <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
@@ -40,7 +51,7 @@ export default function CartScreen() {
               />
               <View style={styles.info}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+                <Text style={styles.price}>R{item.price.toFixed(2)}</Text>
 
                 <View style={styles.controls}>
                   <TouchableOpacity
@@ -74,7 +85,7 @@ export default function CartScreen() {
 
       {cart.length > 0 && (
         <View style={styles.checkoutCard}>
-          <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
+          <Text style={styles.total}>Total: R{total.toFixed(2)}</Text>
 
           <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
             <Text style={styles.checkoutText}>Checkout</Text>

@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../lib/api';
 import { getToken } from '../../lib/auth';
 import { useStripe } from '@stripe/stripe-react-native';
+import * as Font from 'expo-font';
 
 export default function CheckoutScreen() {
   const { cartItems, clearCart } = useContext(CartContext);
@@ -24,7 +25,8 @@ export default function CheckoutScreen() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash' | 'paypal' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash' |  null>(null);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   // ✅ Deep link listener for Stripe returnURL
@@ -62,6 +64,7 @@ export default function CheckoutScreen() {
         items: cartItems.map(item => ({
           product_id: item.id,
           price: item.price,
+          name: item.name,
           quantity: item.quantity,
         })),
       };
@@ -83,9 +86,9 @@ export default function CheckoutScreen() {
           return;
         }
 
-        Alert.alert('✅ Payment Successful', `Order ID: ${order_id}\nTotal: $${amount}`);
+        Alert.alert('✅ Payment Successful', `Order ID: ${order_id}\nTotal: R${amount}`);
       } else {
-        Alert.alert('✅ Order Created', `Order ID: ${order_id}\nTotal: $${amount}`);
+        Alert.alert('✅ Order Created', `Order ID: ${order_id}\nTotal: R${amount}`);
       }
 
       clearCart();
@@ -95,6 +98,15 @@ export default function CheckoutScreen() {
       Alert.alert('❌ Error', err.response?.data?.detail || 'Something went wrong.');
     }
   };
+
+  // Load custom fonts
+  useEffect(() => {
+    Font.loadAsync({
+      'MyFont': require('../static/fonts/Inter-VariableFont_opsz,wght.ttf'), // adjust path as needed
+    }).then(() => setFontsLoaded(true));
+  }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
     <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
@@ -107,12 +119,12 @@ export default function CheckoutScreen() {
           {cartItems.map((item, index) => (
             <View key={index} style={styles.itemRow}>
               <Text style={styles.itemText}>{item.name} × {item.quantity}</Text>
-              <Text style={styles.itemText}>${(item.price * item.quantity).toFixed(2)}</Text>
+              <Text style={styles.itemText}>R{(item.price * item.quantity).toFixed(2)}</Text>
             </View>
           ))}
           <View style={styles.totalRow}>
             <Text style={styles.totalText}>Total:</Text>
-            <Text style={styles.totalText}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalText}>R{total.toFixed(2)}</Text>
           </View>
         </View>
 
@@ -143,7 +155,7 @@ export default function CheckoutScreen() {
         {/* Payment Method */}
         <View style={styles.card}>
           <Text style={styles.subHeader}>Select Payment Method</Text>
-          {['card', 'cash', 'paypal'].map((method) => (
+          {['card', 'cash'].map((method) => (
             <TouchableOpacity
               key={method}
               style={[
