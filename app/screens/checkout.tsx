@@ -81,7 +81,7 @@ export default function CheckoutScreen() {
       if (selectedMethod === 'card') {
         const init = await initPaymentSheet({
           paymentIntentClientSecret: client_secret,
-          returnURL: 'fruitpack://orders',
+          returnURL: 'fruitpack://orders'
         });
 
         if (init.error) throw new Error(init.error.message);
