@@ -64,13 +64,18 @@ export default function FruitDetail() {
       try {
         const imageUrl = `${api.defaults.baseURL}products/images/${product.image}`;
         const localUri = `${FileSystem.cacheDirectory}${product.image}`;
-        const { uri } = await FileSystem.downloadAsync(imageUrl, localUri, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'image/*',
-          },
-        });
-        setLocalImageUri(uri);
+        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        if (!fileInfo.exists) {
+          const { uri } = await FileSystem.downloadAsync(imageUrl, localUri, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'image/*',
+            },
+          });
+          setLocalImageUri(uri);
+        } else {
+          setLocalImageUri(localUri);
+        }
       } catch (err: any) {
         console.error('Error downloading image:', err?.message || err);
         setLocalImageUri(null);
@@ -133,7 +138,7 @@ export default function FruitDetail() {
 
           <View style={styles.card}>
             <Text style={styles.title}>{product.name}</Text>
-            <Text style={styles.price}>R{Number(product.price).toFixed(2)}</Text>
+            <Text style={styles.price}>R{Number(product.price).toFixed(2)}/{product.unit}</Text>
             {product.discount && (
               <Text style={styles.discount}>{Number(product.discount) * 100}% OFF</Text>
             )}
@@ -178,6 +183,7 @@ export default function FruitDetail() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    paddingTop: 50,
     paddingBottom: 120,
   },
   loadingContainer: {
@@ -213,6 +219,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 22,
     color: '#388e3c',
+    fontWeight: '900',
     marginBottom: 4,
   },
   discount: {
@@ -222,6 +229,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#444',
   },
   category: {

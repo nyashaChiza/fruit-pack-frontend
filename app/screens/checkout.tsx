@@ -62,16 +62,19 @@ export default function CheckoutScreen() {
 
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
+      // For now, latitude and longitude are set to 0. Replace with real values if available.
       const payload = {
         full_name: name,
         address,
+        latitude: 0,
+        longitude: 0,
         phone,
         payment_method: selectedMethod,
         items: cartItems.map(item => ({
           product_id: item.id,
-          price: item.price,
           name: item.name,
           quantity: item.quantity,
+          price: item.price,
         })),
       };
 
@@ -92,9 +95,9 @@ export default function CheckoutScreen() {
           return;
         }
 
-        Alert.alert('✅ Payment Successful', `Order ID: ${order_id}\nTotal: R${amount}`);
+        Alert.alert('✅ Payment Successful', `Order ID: ${order_id}`);
       } else {
-        Alert.alert('✅ Order Created', `Order ID: ${order_id}\nTotal: R${amount}`);
+        Alert.alert('✅ Order Created', `Order ID: ${order_id}`);
       }
 
       clearCart();

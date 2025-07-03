@@ -1,3 +1,4 @@
+// screens/cart.tsx
 import {
   View,
   Text,
@@ -94,8 +95,6 @@ export default function CartScreen() {
             <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
               <Text style={styles.checkoutText}>Checkout</Text>
             </TouchableOpacity>
-
-            
           </View>
         )}
 
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     paddingTop: 50,
-    paddingBottom: 220, // space for nav + checkout
+    paddingBottom: 220,
   },
   heading: {
     fontSize: 28,
@@ -171,8 +170,9 @@ const styles = StyleSheet.create({
     color: '#1b5e20',
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#388e3c',
+    fontWeight: '900',
     marginTop: 4,
   },
   controls: {
@@ -212,9 +212,9 @@ const styles = StyleSheet.create({
   },
   checkoutCard: {
     position: 'absolute',
-    bottom: 80, // leave space for nav
+    bottom: 80,
     padding: 16,
-    width: width-16,
+    width: width - 16,
     left: 8,
     backgroundColor: '#ffffffee',
     borderTopLeftRadius: 16,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   total: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1b5e20',
     marginBottom: 10,
     textAlign: 'center',

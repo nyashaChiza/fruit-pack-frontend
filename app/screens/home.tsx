@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Font from 'expo-font';
+import * as FileSystem from 'expo-file-system';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ export default function Home() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [fruits, setFruits] = useState([]);
+  const [cachedImages, setCachedImages] = useState({});
   const [token, setToken] = useState<string | null>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
@@ -69,6 +71,23 @@ export default function Home() {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const res = await api.get('/products/');
         setFruits(res.data);
+
+        // Cache images in background
+        const imageMap = {};
+        await Promise.all(
+          res.data.map(async (item) => {
+            const imageUrl = `${api.defaults.baseURL}products/images/${item.image}`;
+            const localUri = `${FileSystem.cacheDirectory}${item.image}`;
+            const fileInfo = await FileSystem.getInfoAsync(localUri);
+            if (!fileInfo.exists) {
+              await FileSystem.downloadAsync(imageUrl, localUri, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+            }
+            imageMap[item.id] = localUri;
+          })
+        );
+        setCachedImages(imageMap);
       } catch (err: any) {
         console.error('Error fetching fruits:', err.response?.data || err.message);
       }
@@ -93,95 +112,97 @@ export default function Home() {
   const renderFruitItem = ({ item }) => (
     <TouchableOpacity style={styles.productCard} onPress={() => handleFruitPress(item)}>
       <Image
-      source={{ uri: `${api.defaults.baseURL}products/images/${item.image}` }}
-      style={styles.productImage}
+        source={{ uri: cachedImages[item.id] || `${api.defaults.baseURL}products/images/${item.image}` }}
+        style={styles.productImage}
       />
       <View style={styles.productDetails}>
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>R{item.price?.toFixed(2)}</Text>
-      <Text style={styles.productDescription}>{item.description}</Text>
-      <Text style={styles.productCategory}>{item.category_name}</Text>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productPrice}>R{item.price?.toFixed(2)}/{item.unit}</Text>
+        <Text style={styles.productDescription}>{item.description}</Text>
+        <Text style={styles.productCategory}>{item.category_name}</Text>
       </View>
     </TouchableOpacity>
   );
 
   if (!fontsLoaded) return null;
 
-return (
-  <SafeAreaView style={styles.safeArea}>
-    <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Search + Banner + Categories + Popular Fruits */}
-          <View style={styles.header}>
-            <View style={styles.searchBox}>
-              <TextInput
-                placeholder="Search fruits..."
-                placeholderTextColor="#4CAF50"
-                style={styles.searchInput}
-              />
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={["#a8e6cf", "#dcedc1"]} style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Search + Banner + Categories + Popular Fruits */}
+            <View style={styles.header}>
+              <View style={styles.searchBox}>
+                <TextInput
+                  placeholder="Search fruits..."
+                  placeholderTextColor="#4CAF50"
+                  style={styles.searchInput}
+                />
+              </View>
             </View>
-          </View>
 
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            style={styles.banner}
-          >
-            {bannerImages.map((img, index) => (
-              <Image key={index} source={img} style={styles.bannerImage} />
-            ))}
-          </ScrollView>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {categories.map((cat) => (
-                <View key={cat.id} style={styles.categoryCard}>
-                  <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                  <Text style={styles.categoryText}>{cat.name}</Text>
-                </View>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.banner}
+            >
+              {bannerImages.map((img, index) => (
+                <Image key={index} source={img} style={styles.bannerImage} />
               ))}
             </ScrollView>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Popular Fruits</Text>
-            <FlatList
-              data={fruits}
-              renderItem={renderFruitItem}
-              keyExtractor={(item) => item.id.toString()}
-              scrollEnabled={false}
-            />
-          </View>
-        </ScrollView>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Categories</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((cat) => (
+                  <View key={cat.id} style={styles.categoryCard}>
+                    <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                    <Text style={styles.categoryText}>{cat.name}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
 
-        {/* Fixed Bottom Navigation */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity onPress={() => router.push('/screens/home')}>
-            <Text style={styles.navText}>🏠 Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
-            <Text style={styles.navText}>🛒 Cart</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
-            <Text style={styles.navText}>📦 Orders</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              await logout();
-              router.replace('/screens/login');
-            }}
-          >
-            <Text style={styles.navText}>👤 Logout</Text>
-          </TouchableOpacity>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Popular Fruits</Text>
+              <FlatList
+                data={fruits}
+                renderItem={renderFruitItem}
+                keyExtractor={(item) => item.id.toString()}
+                scrollEnabled={false}
+                initialNumToRender={8}
+                windowSize={10}
+                maxToRenderPerBatch={8}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Fixed Bottom Navigation */}
+          <View style={styles.bottomNav}>
+            <TouchableOpacity onPress={() => router.push('/screens/home')}>
+              <Text style={styles.navText}>🏠 Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+              <Text style={styles.navText}>🛒 Cart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+              <Text style={styles.navText}>📦 Orders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => {
+                await logout();
+                router.replace('/screens/login');
+              }}
+            >
+              <Text style={styles.navText}>👤 Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </LinearGradient>
-  </SafeAreaView>
-);
-
+      </LinearGradient>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -210,11 +231,6 @@ const styles = StyleSheet.create({
   searchInput: {
     fontSize: 16,
     color: '#2e7d32',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
   },
   banner: {
     marginBottom: 24,
@@ -275,12 +291,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2e7d32',
   },
+  productUnit: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#2e7d32',
+  },
   productDescription: {
     fontSize: 13,
     fontWeight: '400',
     color: '#2f332e',
   },
-    productCategory: {
+  productCategory: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1f241e',
@@ -288,9 +309,10 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     color: '#555',
+    fontWeight: '900',
     marginTop: 4,
   },
-bottomNav: {
+  bottomNav: {
     position: 'absolute',
     bottom: 0,
     left: 0,
