@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import {
   View,
   Text,
@@ -27,8 +29,25 @@ export default function CheckoutScreen() {
   const [phone, setPhone] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash' | null>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationError, setLocationError] = useState('');
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationError('Permission to access location was denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+    })();
+  }, []);
 
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
@@ -52,6 +71,11 @@ export default function CheckoutScreen() {
       Alert.alert('Missing Info', 'Please fill in all fields and select a payment method.');
       return;
     }
+    if (!latitude || !longitude) {
+      Alert.alert('Location Required', 'Please select your delivery location on the map.');
+      return;
+    }
+
 
     try {
       const token = await getToken();
@@ -66,8 +90,8 @@ export default function CheckoutScreen() {
       const payload = {
         full_name: name,
         address,
-        latitude: 0,
-        longitude: 0,
+        latitude,
+        longitude,
         phone,
         payment_method: selectedMethod,
         items: cartItems.map(item => ({
@@ -154,6 +178,31 @@ export default function CheckoutScreen() {
               style={styles.input}
             />
           </View>
+
+          <View style={[styles.card, { height: 300 }]}>
+            <Text style={styles.subHeader}>Tap to Set Your Location</Text>
+            {latitude && longitude ? (
+              <MapView
+                style={{ flex: 1, borderRadius: 12 }}
+                initialRegion={{
+                  latitude,
+                  longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                onPress={(e) => {
+                  const { latitude, longitude } = e.nativeEvent.coordinate;
+                  setLatitude(latitude);
+                  setLongitude(longitude);
+                }}
+              >
+                <Marker coordinate={{ latitude, longitude }} />
+              </MapView>
+            ) : (
+              <Text style={{ color: '#777' }}>{locationError || 'Loading map...'}</Text>
+            )}
+          </View>
+
 
           <View style={styles.card}>
             <Text style={styles.subHeader}>Select Payment Method</Text>
