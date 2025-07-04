@@ -70,10 +70,10 @@ export default function CheckoutScreen() {
       Alert.alert('Missing Info', 'Please fill in all fields and select a payment method.');
       return;
     }
-    if (!latitude || !longitude) {
-      Alert.alert('Location Required', 'Please select your delivery location on the map.');
-      return;
-    }
+    // if (!latitude || !longitude) {
+    //   Alert.alert('Location Required', 'Please select your delivery location on the map.');
+    //   return;
+    // }
 
 
     try {
@@ -89,8 +89,8 @@ export default function CheckoutScreen() {
       const payload = {
         full_name: name,
         address,
-        latitude,
-        longitude,
+        latitude:0,
+        longitude:0,
         phone,
         payment_method: selectedMethod,
         items: cartItems.map(item => ({

@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { login } from '../../lib/auth';
+import { login, getUserDetails } from '../../lib/auth';
 import { useRouter } from 'expo-router';
 
 // === Reusable theme ===
@@ -45,11 +45,18 @@ export default function Login() {
       }
       const response = await login(username, password);
       
+      const userDetails = await getUserDetails(response); 
+
 
       // Save user details in state
       setUser(response); // <-- Save user info
 
       Alert.alert('Login successful', 'Welcome back!');
+
+      if (userDetails.role === 'driver') {
+        router.replace('/driver/home');
+        return;
+      }
       router.replace('/screens/home');
     } catch (err: any) {
       Alert.alert('Login failed', err?.response?.data?.detail || 'Unknown error');

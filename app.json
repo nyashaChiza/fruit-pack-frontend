@@ -2,8 +2,12 @@
   "expo": {
     "name": "Fruit-Pack",
     "slug": "Fruit-Pack",
-    "plugins": ["expo-font"],
-    "scheme": "fruitpack"
+    "plugins": [
+      "expo-font"
+    ],
+    "scheme": "fruitpack",
+    "android": {
+      "package": "com.anonymous.FruitPack"
+    }
   }
 }
-

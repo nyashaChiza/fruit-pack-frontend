@@ -67,3 +67,34 @@ export function getUserId(token: string): string | null {
     return null;
   }
 }
+
+export async function getUserDetails(token: string) {
+  const userId = getUserId(token);
+  if (!userId) {
+    throw new Error('Invalid token: could not extract user ID.');
+  }
+  try {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    const response = await api.get(`/users/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching user details:', error?.response?.data || error.message);
+    throw new Error(error?.response?.data?.detail || 'Failed to fetch user details.');
+  }
+}
+
+
+export async function getDriverDetails(token: string) {
+  const userId = getUserId(token);
+  if (!userId) {
+    throw new Error('Invalid token: could not extract user ID.');
+  }
+  try {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    const response = await api.get(`/drivers/user/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching driver details:', error?.response?.data || error.message);
+    throw new Error(error?.response?.data?.detail || 'Failed to fetch driver details.');
+  }
+}

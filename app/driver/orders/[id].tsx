@@ -11,56 +11,79 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import api from '../../../lib/api';
-import { getToken, logout } from '../../../lib/auth';
+import { getToken, getDriverDetails, logout } from '../../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Font from 'expo-font';
 
 export default function OrderDetailScreen() {
   const { orderId } = useLocalSearchParams();
   const router = useRouter();
+
   const [order, setOrder] = useState(null);
+  const [driverDetails, setDriverDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
+  // Load fonts
   useEffect(() => {
     Font.loadAsync({
       'MyFont': require('../../static/fonts/Inter-VariableFont_opsz,wght.ttf'),
     }).then(() => setFontsLoaded(true));
   }, []);
 
+  // Fetch token, driver details, and order in one flow
   useEffect(() => {
-    const fetchToken = async () => {
-      const savedToken = await getToken();
-      setToken(savedToken);
-    };
-    fetchToken();
-  }, []);
-
-  useEffect(() => {
-    if (!token || !orderId) return;
-    const fetchOrder = async () => {
+    const init = async () => {
       try {
+        if (!orderId) {
+          throw new Error('Missing order ID.');
+        }
+
+        const token = await getToken();
+        const driver = await getDriverDetails(token);
+        setDriverDetails(driver);
+
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const res = await api.get(`/orders/${orderId}`);
         setOrder(res.data);
       } catch (err) {
-        console.error('Error fetching order:', err);
+        console.error('Init error:', err);
         Alert.alert('Error', 'Failed to load order details.');
       } finally {
         setLoading(false);
       }
     };
-    fetchOrder();
-  }, [token, orderId]);
 
-  const confirmDelivery = async () => {
+    init();
+  }, [orderId]);
+
+  const claimOrder = async () => {
+    if (!driverDetails?.id) {
+      Alert.alert('Error', 'Missing driver info');
+      return;
+    }
+
     try {
-      await api.post(`/orders/${orderId}/confirm-delivery`);
-      Alert.alert('Success', 'Order confirmed as completed');
-      router.replace('/screens/orders');
+      await api.post(`/claims/claim/order/${orderId}/driver/${driverDetails.id}`);
+      Alert.alert('Success', 'Order Claim Successful');
+      router.replace('/driver/home');
     } catch (err) {
-      Alert.alert('Error', 'Could not confirm delivery');
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to claim order');
+    }
+  };
+
+  const deliverOrder = async () => {
+    try {
+      setLoading(true);
+      await api.put(`/orders/${orderId}/status`, {
+        status: 'delivered',
+      });
+      Alert.alert('Success', 'Order marked as delivered!');
+      router.replace('/driver/home');
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to update order status');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,7 +95,7 @@ export default function OrderDetailScreen() {
     );
   }
 
-  if (!order || !fontsLoaded) {
+  if (!fontsLoaded || !order) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={{ color: '#1b5e20', fontSize: 16 }}>No order data found.</Text>
@@ -83,15 +106,6 @@ export default function OrderDetailScreen() {
     );
   }
 
-  const statuses = [
-    { key: 'pending', label: 'Paid', description: 'Payment received' },
-    { key: 'processing', label: 'Processing', description: 'Preparing for delivery' },
-    { key: 'shipped', label: 'Shipped', description: 'On the way' },
-    { key: 'delivered', label: 'Delivered', description: 'Product delivered' },
-    { key: 'completed', label: 'Completed', description: 'Order completed' },
-  ];
-  const currentStatusIndex = statuses.findIndex(s => s.key === order.delivery_status);
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient colors={['#a8e6cf', '#56ab2f']} style={{ flex: 1 }}>
@@ -99,7 +113,7 @@ export default function OrderDetailScreen() {
           <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
             <Text style={styles.heading}>Order Details</Text>
 
-            {/* Order Info Card */}
+            {/* Order Info */}
             <View style={styles.card}>
               <Text style={styles.title}>Order ID: {order.id}</Text>
               <Text style={styles.price}>Total: R{order.total.toFixed(2)}</Text>
@@ -107,8 +121,14 @@ export default function OrderDetailScreen() {
               <Text>Delivery Status: <Text style={styles.status}>{order.delivery_status}</Text></Text>
               <Text>Payment Status: <Text style={styles.status}>{order.payment_status}</Text></Text>
             </View>
+            <View style={styles.card}>
+              <Text style={styles.title}>Customer: {order.customer_name}</Text>
+              <Text style={styles.price}>Address: {order.destination_address}</Text>
+              <Text style={styles.price}>Contact: {order.customer_phone}</Text>
+              
+            </View>
 
-            {/* Order Items */}
+            {/* Items */}
             <View style={styles.card}>
               <Text style={styles.subheading}>Items</Text>
               {order.items?.length > 0 ? (
@@ -123,59 +143,31 @@ export default function OrderDetailScreen() {
                 <Text>No items found.</Text>
               )}
             </View>
-
-            {/* Timeline + Buttons */}
-            <View style={styles.card}>
-              <Text style={styles.subheading}>Order Status Timeline</Text>
-              {statuses.map((status, index) => (
-                <View key={status.key} style={styles.timelineItem}>
-                  <View
-                    style={[
-                      styles.statusCircle,
-                      { backgroundColor: index <= currentStatusIndex ? '#388e3c' : '#9e9e9e' },
-                    ]}
-                  />
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={{
-                      color: index <= currentStatusIndex ? '#2e7d32' : '#757575',
-                      fontWeight: index === currentStatusIndex ? '700' : '400',
-                    }}>
-                      {status.label}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: '#555' }}>{status.description}</Text>
-                  </View>
-                </View>
-              ))}
-
-              {order.delivery_status === 'delivered' && (
-                <TouchableOpacity style={styles.cartButton} onPress={confirmDelivery}>
-                  <Text style={styles.cartButtonText}>Confirm Delivery</Text>
+            
+              <View style={styles.card}>
+                <Text style={styles.subheading}>Actions</Text>
+                {order.delivery_status === 'pending' && (
+                <TouchableOpacity style={styles.cartButton} onPress={claimOrder}>
+                  <Text style={styles.cartButtonText}>Claim Order</Text>
                 </TouchableOpacity>
-              )}
-
-              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-            </View>
+                )}
+                {order.delivery_status === 'shipped' && (
+                <TouchableOpacity style={styles.cartButton} onPress={deliverOrder}>
+                  <Text style={styles.cartButtonText}>Mark As Delivered</Text>
+                </TouchableOpacity>
+                )}
+              </View>
+            
           </ScrollView>
-
-          {/* Bottom Navigation */}
+          {/* Bottom Nav */}
           <View style={styles.bottomNav}>
-            <TouchableOpacity onPress={() => router.push('/screens/home')}>
+            <TouchableOpacity onPress={() => router.push('/driver/home')}>
               <Text style={styles.navText}>🏠 Home</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/screens/cart')}>
-              <Text style={styles.navText}>🛒 Cart</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/screens/orders')}>
-              <Text style={styles.navText}>📦 Orders</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={async () => {
-                await logout();
-                router.replace('/screens/login');
-              }}
-            >
+            <TouchableOpacity onPress={async () => {
+              await logout();
+              router.replace('/screens/login');
+            }}>
               <Text style={styles.navText}>👤 Logout</Text>
             </TouchableOpacity>
           </View>
@@ -211,8 +203,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   price: {
-    fontSize: 20,
-    color: '#388e3c',
+    fontSize: 18,
+    color: '#323833',
+    fontWeight: '700',
     marginBottom: 8,
   },
   subheading: {
@@ -228,16 +221,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 16,
     backgroundColor: '#f1f8e9',
-  },
-  statusCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 6,
   },
   status: {
     fontWeight: '700',
