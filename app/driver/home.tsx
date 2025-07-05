@@ -51,10 +51,20 @@ export default function DriverHomeScreen() {
     }).then(() => setFontsLoaded(true));
   }, []);
 
-  const handleToggleAvailability = () => {
-    setOnline(prev => !prev);
-    // TODO: call API to update availability
-  };
+const handleToggleAvailability = async () => {
+    const newStatus = online ? 'offline' : 'available';
+    setOnline(!online);
+    try {
+        if (driverDetails?.id) {
+            const token = await getToken();
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            await api.patch(`/drivers/${driverDetails.id}/status`, { status: newStatus });
+        }
+    } catch (err: any) {
+        Alert.alert('Error', err?.response?.data?.detail || 'Failed to update status');
+        setOnline(online); // revert on error
+    }
+};
 
   const shareLiveLocation = async () => {
     try {
@@ -97,7 +107,13 @@ export default function DriverHomeScreen() {
           <View style={styles.header}>
             <Text style={styles.headerText}>Welcome, {userDetails?.full_name || ''}</Text>
             <View style={styles.statusRow}>
-              <Text style={styles.statusText}>{online ? '🟢 Online' : '🔴 Offline'}</Text>
+              <Text style={styles.statusText}>
+                {driverDetails?.status === 'busy'
+                  ? '🟡 Busy'
+                  : driverDetails?.status === 'available'
+                  ? '🟢 Available'
+                  : '🔴 Offline'}
+              </Text>
               <Switch value={online} onValueChange={handleToggleAvailability} />
             </View>
           </View>

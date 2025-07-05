@@ -56,7 +56,7 @@ export default function AvailableOrders() {
               <Text style={styles.cardTitle}>Order #{order.id}</Text>
               <Text style={styles.cardText}>Customer: {order.customer_name}</Text>
               <Text style={styles.cardText}>Address: {order.destination_address}</Text>
-              <Text style={styles.cardText}>Payment Status: {order.payment_status}</Text>
+              <Text style={styles.cardText}>Payment Method: {order.payment_method}</Text>
               <Text style={styles.cardText}>Delivery Status: {order.delivery_status}</Text>
               <Text style={styles.cardText}>Total Amount: R{order.total.toFixed(2)}</Text>
             </TouchableOpacity>

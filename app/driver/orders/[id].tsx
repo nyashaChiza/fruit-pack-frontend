@@ -120,6 +120,7 @@ export default function OrderDetailScreen() {
               <Text>Date: {new Date(order.created).toLocaleString()}</Text>
               <Text>Delivery Status: <Text style={styles.status}>{order.delivery_status}</Text></Text>
               <Text>Payment Status: <Text style={styles.status}>{order.payment_status}</Text></Text>
+              <Text>Payment Method: <Text style={styles.status}>{order.payment_method}</Text></Text>
             </View>
             <View style={styles.card}>
               <Text style={styles.title}>Customer: {order.customer_name}</Text>

@@ -84,7 +84,7 @@ export default function OrderDetailScreen() {
   }
 
   const statuses = [
-    { key: 'pending', label: 'Paid', description: 'Payment received' },
+    { key: 'pending', label: 'Ordered', description: 'Order received' },
     { key: 'processing', label: 'Processing', description: 'Preparing for delivery' },
     { key: 'shipped', label: 'Shipped', description: 'On the way' },
     { key: 'delivered', label: 'Delivered', description: 'Product delivered' },
