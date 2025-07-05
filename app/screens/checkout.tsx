@@ -17,6 +17,7 @@ import api from '../../lib/api';
 import { getToken, logout } from '../../lib/auth';
 import { useStripe } from '@stripe/stripe-react-native';
 import * as Font from 'expo-font';
+import * as Location from 'expo-location';
 
 export default function CheckoutScreen() {
   const { cartItems, clearCart } = useContext(CartContext);
@@ -34,6 +35,26 @@ export default function CheckoutScreen() {
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
+  const shareLiveLocation = async () => {
+    try {
+      // Ask for location permissions
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location permission is required to share your live location.');
+        return;
+      }
+
+      // Get current location
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      setLatitude(latitude);
+      setLongitude(longitude);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get location.');
+    }
+  };
+
+
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -70,10 +91,10 @@ export default function CheckoutScreen() {
       Alert.alert('Missing Info', 'Please fill in all fields and select a payment method.');
       return;
     }
-    // if (!latitude || !longitude) {
-    //   Alert.alert('Location Required', 'Please select your delivery location on the map.');
-    //   return;
-    // }
+    if (!latitude || !longitude) {
+      Alert.alert('Location Required', 'Please select your delivery location on the map.');
+      return;
+    }
 
 
     try {
@@ -89,8 +110,8 @@ export default function CheckoutScreen() {
       const payload = {
         full_name: name,
         address,
-        latitude:0,
-        longitude:0,
+        latitude,
+        longitude,
         phone,
         payment_method: selectedMethod,
         items: cartItems.map(item => ({
@@ -181,22 +202,45 @@ export default function CheckoutScreen() {
           <View style={[styles.card, { height: 300 }]}>
             <Text style={styles.subHeader}>Tap to Set Your Location</Text>
             {latitude && longitude ? (
-              <MapView
-                style={{ flex: 1, borderRadius: 12 }}
-                initialRegion={{
-                  latitude,
-                  longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                onPress={(e) => {
-                  const { latitude, longitude } = e.nativeEvent.coordinate;
-                  setLatitude(latitude);
-                  setLongitude(longitude);
-                }}
-              >
-                <Marker coordinate={{ latitude, longitude }} />
-              </MapView>
+              <>
+                {/* Map placeholder or preview */}
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: '#777', marginBottom: 8 }}>
+                    Latitude: {latitude?.toFixed(5)}, Longitude: {longitude?.toFixed(5)}
+                  </Text>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#4caf50',
+                      padding: 12,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      marginBottom: 8,
+                    }}
+                    onPress={shareLiveLocation}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '600' }}>Share Live Location</Text>
+                  </TouchableOpacity>
+                  <Text style={{ color: '#888', fontSize: 12 }}>
+                    (Tap to update your current location)
+                  </Text>
+                </View>
+              </>
+              // <MapView
+              //   style={{ flex: 1, borderRadius: 12 }}
+              //   initialRegion={{
+              //     latitude,
+              //     longitude,
+              //     latitudeDelta: 0.01,
+              //     longitudeDelta: 0.01,
+              //   }}
+              //   onPress={(e) => {
+              //     const { latitude, longitude } = e.nativeEvent.coordinate;
+              //     setLatitude(latitude);
+              //     setLongitude(longitude);
+              //   }}
+              // >
+              //   <Marker coordinate={{ latitude, longitude }} />
+              // </MapView>
             ) : (
               <Text style={{ color: '#777' }}>{locationError || 'Loading map...'}</Text>
             )}
