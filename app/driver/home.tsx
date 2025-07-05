@@ -143,63 +143,66 @@ const handleToggleAvailability = async () => {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1b5e20',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  statusText: {
-    marginRight: 8,
-    fontSize: 16,
-    color: '#2e7d32',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2e7d32',
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: '#ffffffdd',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1b5e20',
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 15,
-    left: 0,
-    right: 0,
-    backgroundColor: '#ffffff',
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderTopColor: '#ccc',
-    borderTopWidth: 1,
-    zIndex: 100,
-    elevation: 10,
-  },
-  navText: {
-    fontSize: 16,
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
+    container: { 
+        flex: 1, 
+        position: 'relative', // Ensure relative positioning for absolute children
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 120, // Increased to avoid overlap with bottom menu
+    },
+    header: {
+        marginBottom: 10,
+    },
+    headerText: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: '#1b5e20',
+    },
+    statusRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
+    },
+    statusText: {
+        marginRight: 8,
+        fontSize: 16,
+        color: '#2e7d32',
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#2e7d32',
+        marginBottom: 12,
+    },
+    card: {
+        backgroundColor: '#ffffffdd',
+        padding: 20,
+        borderRadius: 16,
+        marginBottom: 16,
+        elevation: 3,
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1b5e20',
+    },
+    bottomNav: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0, // Stick to the very bottom
+        backgroundColor: '#ffffff',
+        paddingVertical: 14,
+        alignItems: 'center',
+        borderTopColor: '#ccc',
+        borderTopWidth: 1,
+        zIndex: 100,
+        elevation: 10,
+    },
+    navText: {
+        fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
+    },
 });

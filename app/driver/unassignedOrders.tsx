@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import api from '../../lib/api';
-import { getToken } from '../../lib/auth';
+import { getToken, logout } from '../../lib/auth';
 
 export default function AvailableOrders() {
   const [orders, setOrders] = useState([]);
@@ -42,28 +43,43 @@ export default function AvailableOrders() {
   };
 
   return (
-    <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Available Orders</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.title}>Available Orders</Text>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#4caf50" style={{ marginTop: 32 }} />
-        ) : orders.length === 0 ? (
-          <Text style={styles.emptyText}>No orders found.</Text>
-        ) : (
-          orders.map((order) => (
-            <TouchableOpacity key={order.id} style={styles.card} onPress={() => router.push({ pathname: '/driver/orders/[id]', params: { orderId: order.id } })}>
-              <Text style={styles.cardTitle}>Order #{order.id}</Text>
-              <Text style={styles.cardText}>Customer: {order.customer_name}</Text>
-              <Text style={styles.cardText}>Address: {order.destination_address}</Text>
-              <Text style={styles.cardText}>Payment Method: {order.payment_method}</Text>
-              <Text style={styles.cardText}>Delivery Status: {order.delivery_status}</Text>
-              <Text style={styles.cardText}>Total Amount: R{order.total.toFixed(2)}</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#4caf50" style={{ marginTop: 32 }} />
+            ) : orders.length === 0 ? (
+              <Text style={styles.emptyText}>No orders found.</Text>
+            ) : (
+              orders.map((order) => (
+                <TouchableOpacity key={order.id} style={styles.card} onPress={() => router.push({ pathname: '/driver/orders/[id]', params: { orderId: order.id } })}>
+                  <Text style={styles.cardTitle}>Order #{order.id}</Text>
+                  <Text style={styles.cardText}>Customer: {order.customer_name}</Text>
+                  <Text style={styles.cardText}>Address: {order.destination_address}</Text>
+                  <Text style={styles.cardText}>Payment Method: {order.payment_method}</Text>
+                  <Text style={styles.cardText}>Delivery Status: {order.delivery_status}</Text>
+                  <Text style={styles.cardText}>Total Amount: R{order.total.toFixed(2)}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+          <View style={styles.bottomNav}>
+            <TouchableOpacity onPress={() => router.push('/driver/home')}>
+              <Text style={styles.navText}>🏠 Home</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
-    </LinearGradient>
+            <TouchableOpacity onPress={async () => {
+              await logout();
+              router.replace('/screens/login');
+            }}>
+              <Text style={styles.navText}>👤 Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -111,5 +127,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#388e3c',
-  }
+  },
+  navText: {
+        fontSize: 16,
+        color: '#4CAF50',
+    },
+  bottomNav: {
+        backgroundColor: '#ffffff',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 12,
+        borderTopColor: '#ddd',
+        borderTopWidth: 1,
+        zIndex: 100,
+        elevation: 10,
+    },
+
 });

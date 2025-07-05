@@ -101,11 +101,11 @@ export default function OrderDetailScreen() {
 
             {/* Order Info Card */}
             <View style={styles.card}>
-              <Text style={styles.title}>Order ID: {order.id}</Text>
+              <Text style={styles.title}>Order ID: #{order.id}</Text>
               <Text style={styles.price}>Total: R{order.total.toFixed(2)}</Text>
-              <Text>Date: {new Date(order.created).toLocaleString()}</Text>
-              <Text>Delivery Status: <Text style={styles.status}>{order.delivery_status}</Text></Text>
-              <Text>Payment Status: <Text style={styles.status}>{order.payment_status}</Text></Text>
+              <Text style={styles.label}>Date: <Text style={styles.status}>{new Date(order.created).toLocaleString()}</Text></Text>
+              <Text style={styles.label}>Delivery Status: <Text style={styles.status}>{order.delivery_status}</Text></Text>
+              <Text style={styles.label}>Payment Status: <Text style={styles.status}>{order.payment_status}</Text></Text>
             </View>
 
             {/* Order Items */}
@@ -114,7 +114,7 @@ export default function OrderDetailScreen() {
               {order.items?.length > 0 ? (
                 order.items.map(item => (
                   <View key={item.id} style={styles.item}>
-                    <Text style={{ fontWeight: '600' }}>Product: {item.name}</Text>
+                    <Text style={styles.itemName} >Product: {item.name}</Text>
                     <Text>Quantity: {item.quantity}</Text>
                     <Text>Price: R{item.price.toFixed(2)}</Text>
                   </View>
@@ -211,9 +211,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   price: {
-    fontSize: 20,
+    fontSize: 21,
     color: '#388e3c',
     marginBottom: 8,
+    fontWeight: '800',
   },
   subheading: {
     fontSize: 20,
@@ -229,6 +230,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#f1f8e9',
   },
+  itemName: {
+    fontWeight: '600',
+    fontSize: 16,
+    marginBottom: 4,
+  },
   statusCircle: {
     width: 18,
     height: 18,
@@ -240,8 +246,15 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   status: {
-    fontWeight: '700',
+    fontWeight: '900',
     color: '#2e7d32',
+    textTransform: 'capitalize',
+    fontSize: 19,
+  },
+  label: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
   },
   cartButton: {
     backgroundColor: '#4caf50',

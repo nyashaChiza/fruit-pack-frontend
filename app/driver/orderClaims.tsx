@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import api from '../../lib/api';
-import { getToken, getDriverDetails } from '../../lib/auth';
+import { getToken, getDriverDetails, logout } from '../../lib/auth';
 
 export default function DriverClaims() {
   const [claims, setClaims] = useState([]);
@@ -49,6 +50,7 @@ export default function DriverClaims() {
   }, [driverDetails]); // <-- depend on driverDetails
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
     <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Claims</Text>
@@ -68,43 +70,76 @@ export default function DriverClaims() {
             </TouchableOpacity>
           ))
         )}
+        <View style={styles.bottomNav}>
+                    <TouchableOpacity onPress={() => router.push('/driver/home')}>
+                      <Text style={styles.navText}>🏠 Home</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={async () => {
+                      await logout();
+                      router.replace('/screens/login');
+                    }}>
+                      <Text style={styles.navText}>👤 Logout</Text>
+                    </TouchableOpacity>
+                  </View>
       </ScrollView>
     </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1b5e20',
-    marginBottom: 20,
-  },
-  card: {
-    backgroundColor: '#ffffffdd',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2e7d32',
-    marginBottom: 6,
-  },
-  cardText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#444',
-    textAlign: 'center',
-    marginTop: 40,
-  },
+    container: {
+        flexGrow: 1,
+        padding: 16,
+        paddingBottom: 100,
+        paddingTop: 0,
+        minHeight: '100%',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#1b5e20',
+        marginBottom: 20,
+    },
+    card: {
+        backgroundColor: '#ffffffdd',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 16,
+        elevation: 2,
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2e7d32',
+        marginBottom: 6,
+    },
+    cardText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#444',
+        textAlign: 'center',
+        marginTop: 40,
+    },
+    navText: {
+        fontSize: 16,
+        color: '#4CAF50',
+    },
+    bottomNav: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#ffffff',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 12,
+        borderTopColor: '#ddd',
+        borderTopWidth: 1,
+        zIndex: 100,
+        elevation: 10,
+    },
 });

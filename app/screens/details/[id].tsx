@@ -8,6 +8,7 @@ import {
   Alert,
   StyleSheet,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -105,24 +106,30 @@ export default function FruitDetail() {
 
   if (loadingProduct || !fontsLoaded) {
     return (
+      <SafeAreaView style={{flex: 1}}>
+        <ActivityIndicator size="large" color="#4caf50" />
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4caf50" />
       </View>
+      </SafeAreaView>
     );
   }
 
   if (!product) {
     return (
+      <SafeAreaView style={{flex: 1}}>
       <View style={styles.loadingContainer}>
         <Text style={{ color: '#fff' }}>Product not found.</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go Back</Text>
         </TouchableOpacity>
       </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
     <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
@@ -177,6 +184,7 @@ export default function FruitDetail() {
         </View>
       </View>
     </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -185,6 +193,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 50,
     paddingBottom: 120,
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -211,10 +220,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    fontSize: 28,
+    fontSize: 25,
     fontWeight: '700',
-    color: '#1b5e20',
     marginBottom: 8,
+    color: '#1b5e20',
   },
   price: {
     fontSize: 22,
@@ -263,9 +272,9 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     position: 'absolute',
-    bottom: 17,
-    left: 5,
-    right: 5,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#ffffff',
     flexDirection: 'row',
     justifyContent: 'space-around',

@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import * as Font from 'expo-font';
@@ -39,87 +40,96 @@ export default function CartScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.heading}>🛒 Your Cart</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.container,
+              { paddingBottom: 220 }, // Ensure enough space for bottom nav
+            ]}
+          >
+            <Text style={styles.heading}>🛒 Your Cart</Text>
 
-          {cart.length === 0 ? (
-            <Text style={styles.emptyText}>Your cart is empty.</Text>
-          ) : (
-            cart.map((item) => (
-              <View key={item.id} style={styles.card}>
-                <Image
-                  source={{ uri: `${api.defaults.baseURL}products/images/${item.image_name}` }}
-                  style={styles.image}
-                />
-                <View style={styles.info}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.price}>R{item.price.toFixed(2)}</Text>
+            {cart.length === 0 ? (
+              <Text style={styles.emptyText}>Your cart is empty.</Text>
+            ) : (
+              cart.map((item) => (
+                <View key={item.id} style={styles.card}>
+                  <Image
+                    source={{
+                      uri: `${api.defaults.baseURL}products/images/${item.image_name}`,
+                    }}
+                    style={styles.image}
+                  />
+                  <View style={styles.info}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.price}>R{item.price.toFixed(2)}</Text>
 
-                  <View style={styles.controls}>
+                    <View style={styles.controls}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateQuantity(item.id, Math.max(item.quantity - 1, 1))
+                        }
+                        style={styles.qtyButton}
+                      >
+                        <Text style={styles.qtyText}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.qtyCount}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                        style={styles.qtyButton}
+                      >
+                        <Text style={styles.qtyText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+
                     <TouchableOpacity
-                      onPress={() =>
-                        updateQuantity(item.id, Math.max(item.quantity - 1, 1))
-                      }
-                      style={styles.qtyButton}
+                      onPress={() => removeFromCart(item.id)}
+                      style={styles.removeButton}
                     >
-                      <Text style={styles.qtyText}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.qtyCount}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                      style={styles.qtyButton}
-                    >
-                      <Text style={styles.qtyText}>+</Text>
+                      <Text style={styles.removeButtonText}>🗑 Remove</Text>
                     </TouchableOpacity>
                   </View>
-
-                  <TouchableOpacity
-                    onPress={() => removeFromCart(item.id)}
-                    style={styles.removeButton}
-                  >
-                    <Text style={styles.removeButtonText}>🗑 Remove</Text>
-                  </TouchableOpacity>
                 </View>
-              </View>
-            ))
+              ))
+            )}
+          </ScrollView>
+
+          {/* Checkout Summary */}
+          {cart.length > 0 && (
+            <View style={styles.checkoutCard}>
+              <Text style={styles.total}>Total: R{total.toFixed(2)}</Text>
+
+              <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+                <Text style={styles.checkoutText}>Checkout</Text>
+              </TouchableOpacity>
+            </View>
           )}
-        </ScrollView>
 
-        {/* Checkout Summary */}
-        {cart.length > 0 && (
-          <View style={styles.checkoutCard}>
-            <Text style={styles.total}>Total: R{total.toFixed(2)}</Text>
-
-            <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-              <Text style={styles.checkoutText}>Checkout</Text>
+          {/* Fixed Bottom Navigation */}
+          <View style={[styles.bottomNav, { position: 'absolute', left: 0, right: 0, bottom: 0 }]}>
+            <TouchableOpacity onPress={() => router.push('/screens/home')}>
+              <Text style={styles.navText}>🏠 Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/cart')}>
+              <Text style={styles.navText}>🛒 Cart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/screens/orders')}>
+              <Text style={styles.navText}>📦 Orders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => {
+                await logout();
+                router.replace('/screens/login');
+              }}
+            >
+              <Text style={styles.navText}>👤 Logout</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {/* Fixed Bottom Navigation */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity onPress={() => router.push('/screens/home')}>
-            <Text style={styles.navText}>🏠 Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/screens/cart')}>
-            <Text style={styles.navText}>🛒 Cart</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/screens/orders')}>
-            <Text style={styles.navText}>📦 Orders</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              await logout();
-              router.replace('/screens/login');
-            }}
-          >
-            <Text style={styles.navText}>👤 Logout</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </LinearGradient>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 

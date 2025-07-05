@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CartContext } from '../../lib/CartContext';
@@ -155,6 +156,7 @@ export default function CheckoutScreen() {
   if (!fontsLoaded) return null;
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
     <LinearGradient colors={['#a8e6cf', '#dcedc1']} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
@@ -242,7 +244,7 @@ export default function CheckoutScreen() {
               //   <Marker coordinate={{ latitude, longitude }} />
               // </MapView>
             ) : (
-              <Text style={{ color: '#777' }}>{locationError || 'Loading map...'}</Text>
+              <Text style={{ color: '#777' }}>{locationError || 'Finding Your Location...'}</Text>
             )}
           </View>
 
@@ -292,6 +294,7 @@ export default function CheckoutScreen() {
         </View>
       </View>
     </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -386,7 +389,7 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     position: 'absolute',
-    bottom: 15,
+    bottom: 1,
     left: 6,
     right: 6,
     backgroundColor: '#ffffff',

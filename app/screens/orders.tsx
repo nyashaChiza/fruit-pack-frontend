@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -58,7 +59,7 @@ export default function OrdersListScreen() {
       onPress={() => router.push({ pathname: '/screens/orders/[id]', params: { orderId: item.id } })}
     >
       <View style={styles.orderHeader}>
-        <Text style={styles.orderText}>Order ID: {item.id}</Text>
+        <Text style={styles.orderText}>Order ID: #{item.id}</Text>
         <Text
           style={[
             styles.statusText,
@@ -83,6 +84,8 @@ export default function OrdersListScreen() {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* Use LinearGradient for background */}
     <LinearGradient colors={['#dcedc1', '#a8e6cf']} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <View style={styles.container}>
@@ -123,6 +126,7 @@ export default function OrdersListScreen() {
         </View>
       </View>
     </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -149,8 +153,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   orderText: {
-    fontSize: 16,
+    fontSize: 17,
     marginBottom: 4,
+    fontWeight: '800',
     color: '#333',
   },
   statusText: {
@@ -160,13 +165,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
     textTransform: 'capitalize',
-    fontWeight: '600',
+    fontWeight: '800',
   },
   bottomNav: {
     position: 'absolute',
-    bottom: 25,
-    left: 5,
-    right: 5,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#ffffff',
     flexDirection: 'row',
     justifyContent: 'space-around',
